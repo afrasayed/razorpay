@@ -1,0 +1,91 @@
+{
+  "merchant": {
+    "id": "merchant_afra_infra_demo",
+    "name": "Afra Infra Roofing & Tiles",
+    "currency": "INR",
+    "policy_url": "/.well-known/agent-catalog.json",
+    "description": "Roofing sheets, tiles and installation add-ons. Prices are in paise (1 INR = 100 paise), matching Razorpay's smallest-unit convention."
+  },
+  "products": [
+    {
+      "id": "sku_roof_sheet_std",
+      "name": "Standard Galvanised Roofing Sheet (per unit)",
+      "category": "roofing",
+      "price_paise": 85000,
+      "currency": "INR",
+      "stock": 500,
+      "description": "8ft galvanised iron roofing sheet, standard gauge.",
+      "upsell_ids": ["sku_ridge_cap", "sku_installation_basic"]
+    },
+    {
+      "id": "sku_roof_sheet_premium",
+      "name": "Premium Coated Roofing Sheet (per unit)",
+      "category": "roofing",
+      "price_paise": 145000,
+      "currency": "INR",
+      "stock": 200,
+      "description": "Corrosion-resistant coated sheet, 15-year finish warranty.",
+      "upsell_ids": ["sku_ridge_cap", "sku_installation_premium"]
+    },
+    {
+      "id": "sku_clay_tile",
+      "name": "Terracotta Clay Roof Tile (per sq. ft. bundle)",
+      "category": "tiles",
+      "price_paise": 62000,
+      "currency": "INR",
+      "stock": 800,
+      "description": "Traditional terracotta tile bundle, covers ~10 sq ft.",
+      "upsell_ids": ["sku_tile_sealant"]
+    },
+    {
+      "id": "sku_ridge_cap",
+      "name": "Ridge Cap Set",
+      "category": "accessory",
+      "price_paise": 32000,
+      "currency": "INR",
+      "stock": 300,
+      "description": "Weatherproofing ridge caps, set of 10.",
+      "upsell_ids": []
+    },
+    {
+      "id": "sku_tile_sealant",
+      "name": "Tile Sealant (5L)",
+      "category": "accessory",
+      "price_paise": 18000,
+      "currency": "INR",
+      "stock": 400,
+      "description": "Waterproof sealant for clay tile roofs.",
+      "upsell_ids": []
+    },
+    {
+      "id": "sku_installation_basic",
+      "name": "Basic Installation Labour (per 100 sq ft)",
+      "category": "service",
+      "price_paise": 250000,
+      "currency": "INR",
+      "stock": 9999,
+      "description": "Standard installation crew, 1-day turnaround per 100 sq ft.",
+      "upsell_ids": []
+    },
+    {
+      "id": "sku_installation_premium",
+      "name": "Premium Installation + Site Inspection",
+      "category": "service",
+      "price_paise": 420000,
+      "currency": "INR",
+      "stock": 9999,
+      "description": "Includes structural inspection and a 2-year workmanship warranty.",
+      "upsell_ids": []
+    },
+    {
+      "id": "sku_industrial_bulk_order",
+      "name": "Industrial Bulk Sheet Pallet (200 units)",
+      "category": "roofing",
+      "price_paise": 15500000,
+      "currency": "INR",
+      "stock": 5,
+      "description": "Deliberately large-ticket SKU, used in this demo to trigger the gateway ceiling and show graceful failure handling for oversized single-order amounts.",
+      "upsell_ids": []
+    }
+  ]
+}
