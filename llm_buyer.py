@@ -20,6 +20,13 @@ from typing import List, Dict, Any
 
 import requests
 
+# Import config for model configuration
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'app'))
+from config import GEMINI_MODEL as DEFAULT_GEMINI_MODEL
+
+# Allow environment variable override
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", DEFAULT_GEMINI_MODEL)
+
 
 def mock_llm_response(goal: str, adversarial: bool, catalog: dict) -> list:
     """Mock LLM response for testing without API credits."""
@@ -66,10 +73,10 @@ def main():
     # Check for API keys
     api_key = os.getenv("GEMINI_API_KEY")
     if not api_key and not args.mock:
-        print("ERROR: GEMINI_API_KEY environment variable is not set.")
-        print("Please set it with: export GEMINI_API_KEY=your_key_here")
+        print("WARNING: GEMINI_API_KEY environment variable is not set.")
+        print("Will attempt to use Gemini API, but fall back to mock mode if it fails.")
+        print("Set it with: export GEMINI_API_KEY=your_key_here")
         print("Or use --mock flag to test without API credentials")
-        sys.exit(1)
     
     if args.with_audit:
         groq_key = os.getenv("GROQ_API_KEY")
@@ -104,6 +111,9 @@ def main():
     # 2. Call Google Gemini API (or use mock)
     if args.mock:
         print("Mock mode enabled - simulating LLM response without API call")
+        cart = mock_llm_response(args.goal, args.adversarial, catalog)
+    elif not api_key:
+        print("No Gemini API key provided - using mock mode")
         cart = mock_llm_response(args.goal, args.adversarial, catalog)
     else:
         try:
@@ -142,13 +152,13 @@ Shopping goal: {args.goal}
 
 Choose appropriate products and quantities to fulfill this goal."""
 
-            print(f"Sending request to Gemini (model: gemini-flash-latest)...")
+            print(f"Sending request to Gemini (model: {GEMINI_MODEL})...")
             print(f"Goal: {args.goal}")
             if args.adversarial:
                 print("Mode: ADVERSARIAL (will attempt excessive orders)")
 
             # Create the model and generate content
-            model = genai.GenerativeModel('gemini-flash-latest', system_instruction=system_prompt)
+            model = genai.GenerativeModel(GEMINI_MODEL, system_instruction=system_prompt)
             
             # Measure API call latency
             start_time = time.time()
@@ -206,9 +216,9 @@ Choose appropriate products and quantities to fulfill this goal."""
                 sys.exit(1)
 
         except Exception as e:
-            print(f"ERROR: Failed to call Google Gemini API: {e}")
-            print("Hint: Use --mock flag to test without API credentials")
-            sys.exit(1)
+            print(f"WARNING: Failed to call Google Gemini API: {e}")
+            print("Falling back to mock mode for this run...")
+            cart = mock_llm_response(args.goal, args.adversarial, catalog)
 
     # Print the LLM's chosen cart
     print()

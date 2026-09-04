@@ -14,6 +14,8 @@ Flow per request:
   6. call Razorpay to create the order, catch + explain failures -> audit: razorpay_order_create / razorpay_failure
   7. return a structured, buyer-facing result                    -> audit: checkout_result
 """
+import json
+import os
 import uuid
 from typing import Optional
 
@@ -21,6 +23,106 @@ from . import catalog, policy, config
 from . import upsell as upsell_mod
 from .audit import AuditTrail
 from .razorpay_client import client, RazorpayError
+
+
+def get_ai_buyer_cart(goal: str, catalog_data: dict, gemini_api_key: str = "") -> tuple[list, str, str]:
+    """
+    Get cart selection from AI buyer using Gemini API, with fallback to mock mode.
+    
+    Returns:
+        tuple: (cart_items, mode_used, error_message) where mode_used is "gemini" or "mock"
+    """
+    # Try Gemini API if key is provided
+    if gemini_api_key:
+        try:
+            import google.generativeai as genai
+            
+            genai.configure(api_key=gemini_api_key)
+            
+            system_prompt = """You are an AI buyer agent. Your task is to choose products from a merchant catalog to fulfill a shopping goal.
+
+You must respond with ONLY a JSON array of objects, each with:
+- "product_id": the exact product ID from the catalog
+- "qty": a positive integer quantity
+
+Do NOT include any prose, explanations, or markdown formatting. Just the raw JSON array.
+
+Constraints:
+- Only use product_ids that exist in the provided catalog
+- Do NOT invent products or IDs
+- Choose reasonable quantities based on the goal
+- Consider the product descriptions to make appropriate choices"""
+
+            user_message = f"""Here is the merchant catalog:
+{json.dumps(catalog_data, indent=2)}
+
+Shopping goal: {goal}
+
+Choose appropriate products and quantities to fulfill this goal."""
+
+            # Create the model and generate content
+            # Allow environment variable override
+            model_name = os.getenv("GEMINI_MODEL", config.GEMINI_MODEL)
+            model = genai.GenerativeModel(model_name, system_instruction=system_prompt)
+            response = model.generate_content(user_message)
+            llm_response = response.text
+            
+            # Clean up response if it has markdown code blocks
+            cleaned = llm_response.strip()
+            if cleaned.startswith("```"):
+                cleaned = cleaned.split("```")[1]
+                if cleaned.startswith("json"):
+                    cleaned = cleaned[4:]
+            cleaned = cleaned.strip()
+            
+            cart = json.loads(cleaned)
+            
+            # Validate structure
+            if not isinstance(cart, list):
+                raise ValueError("Response is not a JSON array")
+            for item in cart:
+                if not isinstance(item, dict):
+                    raise ValueError("Cart item is not an object")
+                if "product_id" not in item or "qty" not in item:
+                    raise ValueError("Cart item missing product_id or qty")
+                if not isinstance(item["qty"], int) or item["qty"] <= 0:
+                    raise ValueError("Quantity must be a positive integer")
+            
+            return cart, "gemini", ""
+            
+        except Exception as e:
+            # Fall back to mock mode on any Gemini API error
+            import traceback
+            error_msg = str(e)
+            print(f"Gemini API call failed: {error_msg}, falling back to mock mode")
+            traceback.print_exc()
+            return get_mock_cart(goal, catalog_data), "mock_fallback", error_msg
+    
+    # Use mock mode if no key provided
+    return get_mock_cart(goal, catalog_data), "mock", ""
+
+
+def get_mock_cart(goal: str, catalog_data: dict) -> list:
+    """Generate a mock cart based on the goal."""
+    goal_lower = goal.lower()
+    
+    if "200 sq ft" in goal_lower:
+        # 200 sq ft roof needs reasonable quantities
+        return [
+            {"product_id": "sku_roof_sheet_std", "qty": 8},
+            {"product_id": "sku_installation_basic", "qty": 1}
+        ]
+    elif "small" in goal_lower or "2" in goal or "few" in goal_lower:
+        # Small order
+        return [
+            {"product_id": "sku_roof_sheet_std", "qty": 3}
+        ]
+    else:
+        # Default reasonable order
+        return [
+            {"product_id": "sku_roof_sheet_std", "qty": 5},
+            {"product_id": "sku_installation_basic", "qty": 1}
+        ]
 
 _SESSION_SPEND = {}  # session_id -> paise spent so far (in-memory demo state)
 _SESSION_HISTORY = {}  # session_id -> list of previous order details for audit context
@@ -49,10 +151,42 @@ class CheckoutAgent:
         with_auditor: bool = False,
         customer_goal: str = "",
         groq_api_key: str = "",
+        gemini_api_key: str = "",
     ) -> dict:
-        # 1. Resolve cart
+        # 1. Resolve cart (or use AI buyer if no items provided)
         cart = []
         unresolved = []
+        ai_mode = "manual"
+        
+        # If no items provided but customer goal is set, use AI buyer
+        ai_error = None
+        if not items and customer_goal:
+            try:
+                ai_items, ai_mode, error_msg = get_ai_buyer_cart(customer_goal, catalog.get_manifest(), gemini_api_key)
+                items = ai_items
+                ai_error = error_msg if error_msg else None
+                
+                # Build explanation with error message if fallback occurred
+                explanation = "Cart selected by AI buyer: " + ", ".join(f"{i['product_id']} (qty: {i['qty']})" for i in items)
+                if error_msg:
+                    explanation = f"Gemini API call failed: {error_msg} — using mock fallback. " + explanation
+                
+                self.audit.log(
+                    session_id, "ai_buyer_selection",
+                    summary=f"AI buyer selected {len(items)} item(s) using {ai_mode} mode.",
+                    inputs={"customer_goal": customer_goal, "mode": ai_mode, "error": error_msg if error_msg else None},
+                    outcome="info",
+                    explanation=explanation,
+                )
+            except Exception as e:
+                self.audit.log(
+                    session_id, "ai_buyer_selection",
+                    summary=f"AI buyer selection failed: {str(e)}",
+                    outcome="failure",
+                    explanation="Falling back to requiring manual item selection.",
+                )
+                return self._result(session_id, False, "AI buyer failed to select items. Please select products manually.", cart=[], order=None, ai_mode="error", ai_error=str(e))
+        
         for it in items:
             product = catalog.find_product(it["product_id"])
             if not product:
@@ -64,12 +198,12 @@ class CheckoutAgent:
         self.audit.log(
             session_id, "cart_build",
             summary=f"Resolved {len(cart)}/{len(items)} requested line(s); {len(unresolved)} unknown SKU(s).",
-            inputs={"requested": items, "unresolved_ids": unresolved},
+            inputs={"requested": items, "unresolved_ids": unresolved, "ai_mode": ai_mode},
             outcome="info" if not unresolved else "failure",
             explanation=(f"Could not find product id(s) {unresolved} in the catalog." if unresolved else ""),
         )
         if not cart:
-            return self._result(session_id, False, "No valid items to check out.", cart=[], order=None)
+            return self._result(session_id, False, "No valid items to check out.", cart=[], order=None, ai_mode=ai_mode, ai_error=ai_error)
 
         # 2. Policy gate
         checks = policy.evaluate_cart(cart, self._session_spend(session_id), set())
@@ -86,7 +220,7 @@ class CheckoutAgent:
             failing = [c for c in checks if not c.passed]
             msg = ("This order is blocked by merchant policy before any charge was attempted: "
                    + "; ".join(f"{c.rule} ({c.detail})" for c in failing))
-            return self._result(session_id, False, msg, cart=cart, order=None)
+            return self._result(session_id, False, msg, cart=cart, order=None, ai_mode=ai_mode, ai_error=ai_error)
 
         # 3. Bounded upsell (offer only, never auto-charges beyond what's accepted)
         candidate, reason = upsell_mod.suggest(cart, self._session_spend(session_id))
@@ -151,6 +285,21 @@ class CheckoutAgent:
                     explanation="Independent LLM auditor failed but checkout continues.",
                 )
 
+        # 4.5. Hold order if auditor flagged it for review
+        if audit_result and audit_result["risk_flag"] == "flagged_for_review":
+            self.audit.log(
+                session_id, "order_held_for_approval",
+                summary=f"Order held due to auditor flag. Requires human approval before Razorpay call.",
+                inputs={"auditor_reasoning": audit_result["reasoning"]},
+                outcome="blocked",
+                explanation=f"Independent auditor flagged this order: {audit_result['reasoning']}. Order held pending human approval.",
+            )
+            return self._result(
+                session_id, False,
+                f"Order held for human approval. Auditor flagged: {audit_result['reasoning']}",
+                cart=cart, order=None, needs_approval=True, audit_result=audit_result, ai_mode=ai_mode, ai_error=ai_error,
+            )
+
         # 5. Human-confirmation gate for high-value orders
         if policy.requires_human_confirmation(cart) and not buyer_confirmed_high_value:
             self.audit.log(
@@ -163,7 +312,7 @@ class CheckoutAgent:
                 session_id, False,
                 f"This order totals INR {order_total/100:.2f}, above the INR {config.HUMAN_CONFIRM_ABOVE_PAISE/100:.2f} "
                 "auto-approval line. Please confirm explicitly to proceed -- no charge has been made.",
-                cart=cart, order=None, needs_confirmation=True,
+                cart=cart, order=None, needs_confirmation=True, ai_mode=ai_mode, ai_error=ai_error,
             )
 
         # 6. Razorpay call, explicit failure handling
@@ -191,7 +340,7 @@ class CheckoutAgent:
             return self._result(
                 session_id, True,
                 f"Order created: {order.id} for INR {order_total/100:.2f}.",
-                cart=cart, order=order.__dict__, upsell_added=upsell_added, audit_result=audit_result,
+                cart=cart, order=order.__dict__, upsell_added=upsell_added, audit_result=audit_result, ai_mode=ai_mode, ai_error=ai_error,
             )
         except RazorpayError as e:
             # --- the one gracefully-handled failure path ---
@@ -206,7 +355,7 @@ class CheckoutAgent:
             result = self._result(
                 session_id, False,
                 f"Payment could not be created ({e.code}): {e.description}",
-                cart=cart, order=None,
+                cart=cart, order=None, ai_mode=ai_mode, ai_error=ai_error,
             )
             result["remediation"] = remediation
             self.audit.log(
@@ -215,6 +364,68 @@ class CheckoutAgent:
                 outcome="failure",
                 explanation=remediation,
             )
+            return result
+
+    def process_held_order(self, session_id: str, cart: list, audit_result: dict, buyer_confirmed_high_value: bool = False) -> dict:
+        """
+        Process a held order after human approval.
+        
+        This is called when a human approves an order that was held due to auditor flag.
+        It proceeds directly to Razorpay order creation.
+        """
+        order_total = sum(i["line_total_paise"] for i in cart)
+        
+        # Log the approval
+        self.audit.log(
+            session_id, "order_approved",
+            summary=f"Order approved by human. Proceeding to Razorpay.",
+            inputs={"order_total_paise": order_total},
+            outcome="allowed",
+            explanation="Human approved the held order, proceeding to payment.",
+        )
+        
+        # Razorpay call
+        receipt = f"rcpt_{session_id}_{uuid.uuid4().hex[:10]}"
+        try:
+            order = client.create_order(
+                amount_paise=order_total,
+                currency="INR",
+                receipt=receipt,
+                notes={"session_id": session_id, "skus": ",".join(i["product"]["id"] for i in cart)},
+            )
+            order_details = {
+                "order_id": order.id,
+                "amount": order_total,
+                "items": [{"id": i["product"]["id"], "qty": i["qty"]} for i in cart]
+            }
+            self._record_spend(session_id, order_total, order_details)
+            self.audit.log(
+                session_id, "razorpay_order_create",
+                summary=f"Order {order.id} created for INR {order_total/100:.2f}.",
+                razorpay={"amount": order.amount, "currency": order.currency, "receipt": order.receipt, "order_id": order.id},
+                outcome="success",
+                explanation=f"Charge authorised after human approval of held order.",
+            )
+            return self._result(
+                session_id, True,
+                f"Order created: {order.id} for INR {order_total/100:.2f}.",
+                cart=cart, order=order.__dict__, audit_result=audit_result,
+            )
+        except RazorpayError as e:
+            self.audit.log(
+                session_id, "razorpay_failure",
+                summary=f"Gateway rejected order: {e.code}",
+                razorpay={"error_code": e.code, "error_description": e.description, "attempted_amount": order_total},
+                outcome="failure",
+                explanation=e.description,
+            )
+            remediation = self._remediate(e, cart)
+            result = self._result(
+                session_id, False,
+                f"Payment could not be created ({e.code}): {e.description}",
+                cart=cart, order=None, audit_result=audit_result,
+            )
+            result["remediation"] = remediation
             return result
 
     def _remediate(self, e: RazorpayError, cart: list) -> str:
@@ -226,7 +437,7 @@ class CheckoutAgent:
                     f"retrying each with a fresh receipt id -- no funds were moved.")
         return "Suggest retrying with a corrected amount/currency, or contacting merchant support -- no funds were moved."
 
-    def _result(self, session_id, success, message, cart, order, upsell_added=None, needs_confirmation=False, audit_result=None):
+    def _result(self, session_id, success, message, cart, order, upsell_added=None, needs_confirmation=False, needs_approval=False, audit_result=None, ai_mode=None, ai_error=None):
         return {
             "session_id": session_id,
             "success": success,
@@ -237,5 +448,8 @@ class CheckoutAgent:
             "order": order,
             "upsell_added": upsell_added,
             "needs_confirmation": needs_confirmation,
+            "needs_approval": needs_approval,
             "audit_result": audit_result,
+            "ai_mode": ai_mode,
+            "ai_error": ai_error,
         }

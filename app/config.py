@@ -36,3 +36,8 @@ MOCK_GATEWAY_CEILING_PAISE = 5_000_000      # INR 50,000
 AUDIT_LOG_PATH = os.getenv("AUDIT_LOG_PATH", os.path.join(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data", "audit_log.jsonl"
 ))
+
+# --- AI Buyer Model Configuration ---
+# Model to use for AI buyer agent (Gemini API)
+# Default to a stable Flash-tier model that's fast and cost-effective
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.5-flash")

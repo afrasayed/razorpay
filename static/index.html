@@ -2,195 +2,1424 @@
 <html lang="en">
 <head>
 <meta charset="utf-8" />
-<title>Afra Infra — Agent Checkout Demo</title>
+<title>Afra Infra — Smart Roofing & Tiles</title>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <style>
-  :root { --bg:#0b0d10; --panel:#14171c; --line:#262b33; --ink:#e8ebef; --dim:#8a93a3;
-          --ok:#3ecf8e; --bad:#e55a5a; --warn:#e0b84a; --accent:#5aa9e6; }
+  :root { 
+    --bg:#f8fafc; --panel:#ffffff; --line:#e2e8f0; --ink:#1e293b; --dim:#64748b;
+    --ok:#10b981; --bad:#ef4444; --warn:#f59e0b; --accent:#3b82f6; --purple:#8b5cf6;
+    --bg-dark:#0f172a; --panel-dark:#1e293b; --line-dark:#334155; --ink-dark:#f1f5f9; 
+  }
   * { box-sizing:border-box; }
-  body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.5 -apple-system,Segoe UI,Roboto,sans-serif; }
-  header { padding:20px 24px; border-bottom:1px solid var(--line); }
-  header h1 { font-size:17px; margin:0 0 4px; }
-  header p { margin:0; color:var(--dim); font-size:13px; }
-  .wrap { display:grid; grid-template-columns:340px 1fr; gap:0; height:calc(100vh - 76px); }
-  .panel { padding:20px 24px; overflow-y:auto; }
-  .panel + .panel { border-left:1px solid var(--line); }
-  .product { border:1px solid var(--line); border-radius:8px; padding:10px 12px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center; gap:8px; }
-  .product div.meta { min-width:0; }
-  .product .name { font-size:13.5px; }
-  .product .price { color:var(--dim); font-size:12px; }
-  .product input { width:48px; background:var(--panel); border:1px solid var(--line); color:var(--ink); border-radius:6px; padding:4px 6px; text-align:center; }
-  button { background:var(--accent); color:#08111c; border:none; border-radius:7px; padding:9px 14px; font-weight:600; cursor:pointer; font-size:13.5px; }
-  button.secondary { background:transparent; color:var(--ink); border:1px solid var(--line); }
-  .actions { display:flex; gap:8px; margin-top:14px; flex-wrap:wrap; }
-  .result { border:1px solid var(--line); border-radius:8px; padding:14px; margin-bottom:14px; }
-  .result.success { border-color:var(--ok); }
-  .result.failure { border-color:var(--bad); }
-  .result.blocked { border-color:var(--warn); }
-  .tag { font-size:11px; text-transform:uppercase; letter-spacing:.04em; padding:2px 8px; border-radius:99px; display:inline-block; margin-bottom:8px; }
-  .tag.success { background:rgba(62,207,142,.15); color:var(--ok); }
-  .tag.failure { background:rgba(229,90,90,.15); color:var(--bad); }
-  .tag.blocked { background:rgba(224,184,74,.15); color:var(--warn); }
-  table { width:100%; border-collapse:collapse; font-size:12.5px; }
-  th, td { text-align:left; padding:6px 8px; border-bottom:1px solid var(--line); }
-  th { color:var(--dim); font-weight:600; }
-  .outcome-allowed, .outcome-success { color:var(--ok); }
-  .outcome-blocked, .outcome-failure { color:var(--bad); }
-  .outcome-info { color:var(--dim); }
-  .muted { color:var(--dim); font-size:12.5px; }
-  .row { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
-  label.chk { display:flex; align-items:center; gap:6px; font-size:12.5px; color:var(--dim); }
-  .collapsible { margin-top:16px; border:1px solid var(--line); border-radius:8px; overflow:hidden; }
-  .collapsible-header { padding:10px 14px; background:var(--panel); cursor:pointer; display:flex; align-items:center; justify-content:space-between; font-size:13px; font-weight:600; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; }
+  
+  /* Header */
+  header { background:linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%); color:white; padding:20px 32px; box-shadow:0 2px 10px rgba(30,58,138,0.15); }
+  header h1 { font-size:24px; margin:0 0 6px; font-weight:700; letter-spacing:-0.5px; }
+  header p { margin:0; opacity:0.9; font-size:14px; }
+  .badges-row { display:flex; gap:8px; margin-top:12px; flex-wrap:wrap; }
+  .badge { background:rgba(255,255,255,0.2); padding:4px 12px; border-radius:20px; font-size:12px; font-weight:600; backdrop-filter:blur(4px); }
+  
+  /* Layout */
+  .wrap { display:grid; grid-template-columns:460px 1fr; gap:0; min-height:calc(100vh - 98px); }
+  .panel { padding:24px; overflow-y:auto; max-height:calc(100vh - 98px); }
+  .panel + .panel { border-left:1px solid var(--line); background:var(--panel); }
+  
+  /* Tabs */
+  .tabs { display:flex; gap:4px; margin-bottom:20px; border-bottom:1px solid var(--line); overflow-x:auto; padding-bottom:1px; }
+  .tab { padding:10px 14px; background:var(--bg); border:1px solid transparent; border-bottom:none; border-radius:8px 8px 0 0; 
+        cursor:pointer; font-size:13px; font-weight:600; color:var(--dim); transition:all 0.2s; white-space:nowrap; }
+  .tab:hover { background:var(--line); color:var(--ink); }
+  .tab.active { background:var(--panel); color:var(--accent); border-color:var(--line); border-bottom:2px solid var(--accent); margin-bottom:-1px; }
+  .tab-content { display:none; }
+  .tab-content.active { display:block; }
+  
+  /* Products & Cards */
+  .section-title { font-size:17px; font-weight:700; margin:0 0 16px; color:var(--ink); display:flex; align-items:center; justify-content:space-between; }
+  .product { border:1px solid var(--line); border-radius:12px; padding:14px; margin-bottom:12px; 
+             background:var(--panel); transition:all 0.2s; display:flex; align-items:center; justify-content:space-between; gap:12px; }
+  .product:hover { border-color:var(--accent); box-shadow:0 2px 8px rgba(59,130,246,0.08); }
+  .product div.meta { min-width:0; flex:1; }
+  .product .name { font-size:14px; font-weight:600; margin-bottom:2px; color:var(--ink); }
+  .product .price { color:var(--dim); font-size:13px; font-weight:500; }
+  .product .description { color:var(--dim); font-size:12px; margin-top:4px; line-height:1.35; }
+  .product .category { display:inline-block; background:var(--bg); padding:2px 8px; border-radius:4px; 
+                       font-size:10px; color:var(--dim); margin-top:6px; text-transform:uppercase; letter-spacing:0.5px; font-weight:600; }
+  .product input { width:64px; background:var(--bg); border:1px solid var(--line); color:var(--ink); 
+                   border-radius:8px; padding:8px 10px; text-align:center; font-size:14px; font-weight:600; }
+  .product input:focus { outline:none; border-color:var(--accent); background:white; }
+  
+  /* Goal Input */
+  .goal-section { background:linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border-radius:12px; padding:16px; margin:16px 0; border:1px solid #fcd34d; }
+  .goal-section h3 { margin:0 0 8px; font-size:15px; color:#92400e; font-weight:700; }
+  .goal-section input, .goal-section textarea { width:100%; background:white; border:1.5px solid #fcd34d; color:#1e293b; 
+                       border-radius:8px; padding:10px 12px; font-size:13px; }
+  .goal-section input:focus, .goal-section textarea:focus { outline:none; border-color:#f59e0b; }
+  .goal-section input::placeholder { color:#92400e; opacity:0.6; }
+  
+  /* Buttons */
+  button { background:var(--accent); color:white; border:none; border-radius:8px; padding:10px 16px; 
+           font-weight:600; cursor:pointer; font-size:13px; transition:all 0.2s; display:inline-flex; align-items:center; justify-content:center; gap:6px; }
+  button:hover { background:#2563eb; transform:translateY(-1px); }
+  button:active { transform:translateY(0); }
+  button.secondary { background:var(--bg); color:var(--ink); border:1px solid var(--line); }
+  button.secondary:hover { background:var(--line); }
+  button.success-btn { background:var(--ok); color:white; }
+  button.success-btn:hover { background:#059669; }
+  button.danger-btn { background:var(--bad); color:white; }
+  button.danger-btn:hover { background:#dc2626; }
+  button.small { padding:6px 10px; font-size:12px; border-radius:6px; }
+  .actions { display:flex; gap:10px; margin-top:16px; flex-wrap:wrap; }
+  
+  /* Options & Forms */
+  .options-section { background:var(--bg); border-radius:12px; padding:16px; margin-top:16px; border:1px solid var(--line); }
+  .options-section h4 { margin:0 0 10px; font-size:12px; color:var(--dim); text-transform:uppercase; letter-spacing:0.5px; }
+  label.chk { display:flex; align-items:center; gap:8px; font-size:13px; color:var(--ink); margin-bottom:8px; cursor:pointer; user-select:none; }
+  label.chk input { accent-color:var(--accent); width:16px; height:16px; }
+  
+  .api-section { background:var(--bg); border-radius:12px; padding:14px 16px; margin-top:12px; border:1px solid var(--line); }
+  .api-section label { font-size:12px; color:var(--dim); margin-bottom:4px; display:block; font-weight:600; }
+  .api-section input, .api-section select { width:100%; background:var(--panel); border:1px solid var(--line); color:var(--ink); 
+                       border-radius:8px; padding:8px 12px; font-size:13px; }
+  .api-section input:focus, .api-section select:focus { outline:none; border-color:var(--accent); }
+  
+  /* Item Rows in Customer Order */
+  .order-item-row { display:flex; gap:8px; align-items:center; margin-bottom:8px; }
+  .order-item-row select { flex:1; background:var(--panel); border:1px solid var(--line); color:var(--ink); border-radius:8px; padding:8px 10px; font-size:13px; }
+  .order-item-row input { width:70px; background:var(--panel); border:1px solid var(--line); color:var(--ink); border-radius:8px; padding:8px 10px; text-align:center; font-size:13px; }
+  .order-item-row button.remove-btn { background:transparent; color:var(--dim); border:none; padding:6px; cursor:pointer; font-size:16px; border-radius:6px; }
+  .order-item-row button.remove-btn:hover { background:rgba(239,68,68,0.1); color:var(--bad); }
+
+  /* Tables & Lists */
+  .data-table { width:100%; border-collapse:collapse; font-size:13px; margin-top:8px; background:var(--panel); border-radius:8px; overflow:hidden; border:1px solid var(--line); }
+  .data-table th, .data-table td { text-align:left; padding:10px 12px; border-bottom:1px solid var(--line); }
+  .data-table th { background:var(--bg); color:var(--dim); font-weight:600; font-size:11px; text-transform:uppercase; letter-spacing:0.5px; }
+  .data-table tr:last-child td { border-bottom:none; }
+  .data-table tr:hover td { background:rgba(0,0,0,0.015); }
+
+  .order-card { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:14px; margin-bottom:10px; }
+  .order-card-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; }
+  .order-card-title { font-weight:600; font-size:13px; color:var(--ink); }
+  .order-card-date { font-size:11px; color:var(--dim); }
+  .order-card-items { font-size:12px; color:var(--dim); line-height:1.4; margin-top:4px; }
+  
+  /* Status Badges */
+  .status-badge { display:inline-flex; align-items:center; gap:4px; padding:3px 8px; border-radius:12px; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; }
+  .status-badge.in-stock, .status-badge.completed, .status-badge.approved, .status-badge.success { background:rgba(16,185,129,0.15); color:#059669; }
+  .status-badge.low-stock, .status-badge.pending, .status-badge.warning, .status-badge.blocked { background:rgba(245,158,11,0.15); color:#d97706; }
+  .status-badge.out-of-stock, .status-badge.rejected, .status-badge.failure { background:rgba(239,68,68,0.15); color:#dc2626; }
+  .status-badge.info { background:rgba(59,130,246,0.15); color:#2563eb; }
+
+  /* Results */
+  .result { border-radius:12px; padding:18px; margin-bottom:20px; border:2px solid var(--line); }
+  .result.success { border-color:var(--ok); background:rgba(16,185,129,0.04); }
+  .result.failure { border-color:var(--bad); background:rgba(239,68,68,0.04); }
+  .result.blocked { border-color:var(--warn); background:rgba(245,158,11,0.04); }
+  .result.warning { border-color:var(--purple); background:rgba(139,92,246,0.04); }
+  
+  .tag { font-size:11px; text-transform:uppercase; letter-spacing:0.5px; padding:4px 10px; 
+        border-radius:20px; display:inline-block; margin-bottom:10px; font-weight:700; }
+  .tag.success { background:var(--ok); color:white; }
+  .tag.failure { background:var(--bad); color:white; }
+  .tag.blocked { background:var(--warn); color:white; }
+  .tag.warning { background:var(--purple); color:white; }
+  
+  /* Timeline */
+  .timeline { position:relative; padding-left:26px; margin-top:20px; }
+  .timeline::before { content:''; position:absolute; left:6px; top:4px; bottom:4px; width:2px; 
+                      background:var(--line); }
+  .timeline-item { position:relative; margin-bottom:20px; }
+  .timeline-item::before { content:''; position:absolute; left:-24px; top:5px; width:10px; height:10px; 
+                           border-radius:50%; background:var(--line); border:2px solid var(--panel); }
+  .timeline-item.success::before, .timeline-item.allowed::before { background:var(--ok); }
+  .timeline-item.failure::before, .timeline-item.rejected::before { background:var(--bad); }
+  .timeline-item.blocked::before, .timeline-item.flagged::before { background:var(--warn); }
+  .timeline-item.warning::before { background:var(--purple); }
+  .timeline-item.info::before { background:var(--dim); }
+  
+  .timeline-header { display:flex; align-items:center; gap:8px; margin-bottom:4px; flex-wrap:wrap; }
+  .timeline-action { font-weight:600; font-size:13px; }
+  .timeline-outcome { font-size:10px; text-transform:uppercase; letter-spacing:0.5px; padding:2px 8px; 
+                      border-radius:12px; font-weight:700; }
+  .timeline-outcome.success, .timeline-outcome.allowed { background:rgba(16,185,129,0.15); color:var(--ok); }
+  .timeline-outcome.failure, .timeline-outcome.rejected { background:rgba(239,68,68,0.15); color:var(--bad); }
+  .timeline-outcome.blocked, .timeline-outcome.flagged { background:rgba(245,158,11,0.15); color:var(--warn); }
+  .timeline-outcome.warning { background:rgba(139,92,246,0.15); color:var(--purple); }
+  .timeline-outcome.info { background:rgba(100,116,139,0.15); color:var(--dim); }
+  
+  .timeline-summary { font-size:13px; color:var(--ink); line-height:1.45; }
+  .timeline-explanation { font-size:12px; color:var(--dim); margin-top:4px; line-height:1.4; }
+  .timeline-policy { background:var(--bg); border-radius:8px; padding:10px 12px; margin-top:8px; font-size:12px; }
+  .timeline-policy .policy-item { display:flex; align-items:center; gap:8px; margin-bottom:4px; }
+  .timeline-policy .policy-item:last-child { margin-bottom:0; }
+  .timeline-policy .status { font-weight:700; font-size:10px; padding:2px 6px; border-radius:4px; }
+  .timeline-policy .status.pass { background:rgba(16,185,129,0.15); color:var(--ok); }
+  .timeline-policy .status.fail { background:rgba(239,68,68,0.15); color:var(--bad); }
+  
+  /* Disagreement highlight */
+  .disagreement-alert { background:linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); 
+                        border:1.5px solid #f59e0b; border-radius:10px; padding:14px; margin:14px 0; }
+  .disagreement-alert h4 { margin:0 0 6px; color:#92400e; font-size:13px; display:flex; align-items:center; gap:6px; font-weight:700; }
+  .disagreement-alert p { margin:0; color:#92400e; font-size:12.5px; line-height:1.45; }
+  
+  /* Model attribution */
+  .model-badge { display:inline-flex; align-items:center; gap:4px; padding:3px 8px; 
+                border-radius:20px; font-size:11px; font-weight:600; }
+  .model-badge.gemini { background:rgba(59,130,246,0.15); color:#1e40af; }
+  .model-badge.groq { background:rgba(139,92,246,0.15); color:#6d28d9; }
+  .model-badge svg { width:12px; height:12px; }
+  
+  /* Utility */
+  .muted { color:var(--dim); font-size:13px; }
+  .row { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
+  .collapsible { margin-top:14px; border:1px solid var(--line); border-radius:10px; overflow:hidden; }
+  .collapsible-header { padding:10px 14px; background:var(--bg); cursor:pointer; display:flex; 
+                        align-items:center; justify-content:space-between; font-size:12.5px; font-weight:600; user-select:none; }
   .collapsible-header:hover { background:var(--line); }
-  .collapsible-content { padding:0; max-height:0; overflow:hidden; transition:max-height 0.2s ease; }
-  .collapsible.open .collapsible-content { max-height:600px; overflow:auto; }
+  .collapsible-content { padding:0; max-height:0; overflow:hidden; transition:max-height 0.3s ease; }
+  .collapsible.open .collapsible-content { max-height:450px; overflow:auto; }
   .collapsible.open .collapsible-header { border-bottom:1px solid var(--line); }
-  pre { margin:0; padding:14px; font-size:11px; overflow:auto; }
+  pre { margin:0; padding:14px; font-size:11px; overflow:auto; background:var(--bg-dark); color:var(--ink-dark); }
+  
+  /* Auto-simulation Control Panel */
+  .sim-control-panel {
+    background: linear-gradient(135deg, #eff6ff 0%, #e0e7ff 100%);
+    border: 1.5px solid #bfdbfe;
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .sim-title {
+    font-weight: 700;
+    font-size: 14px;
+    color: #1e3a8a;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .sim-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #94a3b8;
+    display: inline-block;
+    transition: all 0.3s ease;
+  }
+  .sim-dot.active {
+    background: #10b981;
+    box-shadow: 0 0 10px #10b981;
+    animation: pulse-dot 1.5s infinite;
+  }
+  @keyframes pulse-dot {
+    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+    70% { transform: scale(1.1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+  }
+  .sim-counter {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: #1e40af;
+    margin-top: 4px;
+    font-family: monospace;
+  }
+  .sim-btn {
+    background: #2563eb;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 9px 18px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .sim-btn:hover {
+    background: #1d4ed8;
+    transform: translateY(-1px);
+  }
+  .sim-btn.active {
+    background: #dc2626;
+  }
+  .sim-btn.active:hover {
+    background: #b91c1c;
+  }
+
+  /* Step-by-Step Pipeline Timeline */
+  .pipeline-container {
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .pipeline-timeline {
+    max-height: 380px;
+    overflow-y: auto;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    scroll-behavior: smooth;
+  }
+  .pipeline-order-card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 12px 14px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+    transition: border-color 0.2s;
+  }
+  .pipeline-order-card.restock-triggered {
+    border-left: 4px solid #f59e0b;
+    background: linear-gradient(to right, rgba(245, 158, 11, 0.04), var(--panel));
+  }
+  .pipeline-order-card.healthy-stock {
+    border-left: 4px solid var(--ok);
+  }
+  .pipeline-step {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 5px 0;
+    font-size: 13.5px;
+    line-height: 1.4;
+    opacity: 0;
+    transform: translateY(4px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+  }
+  .pipeline-step.revealed {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .pipeline-step-text {
+    font-weight: 500;
+    color: var(--ink);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .pipeline-time {
+    font-size: 11px;
+    color: var(--dim);
+    font-family: monospace;
+    white-space: nowrap;
+    margin-left: 12px;
+  }
 </style>
 </head>
 <body>
 <header>
-  <h1>Afra Infra — Agent Checkout Demo</h1>
-  <p>Every action below is bounded, gated and logged. Razorpay mode: <span id="mode">mock</span>.</p>
+  <h1>Afra Infra — Smart Roofing & Tiles</h1>
+  <p>Autonomous AI Merchant Pipeline: Depletion &bull; AI Restock &bull; Groq Auditor &bull; Policy Gates</p>
+  <div class="badges-row">
+    <span class="badge">🤖 Gemini 2.5 Buyer Agent</span>
+    <span class="badge">🔒 Policy &amp; Ceiling Gates</span>
+    <span class="badge">👁️ Groq Independent Auditor</span>
+    <span class="badge">⚡ Razorpay Mock Gateway</span>
+  </div>
 </header>
 <div class="wrap">
   <div class="panel">
-    <div id="products"></div>
-    <label class="chk"><input type="checkbox" id="acceptUpsell" checked /> Auto-accept bounded upsell offers</label>
-    <label class="chk" style="margin-top:6px"><input type="checkbox" id="confirmHigh" /> I confirm high-value orders (&gt; INR 5,000)</label>
-    <label class="chk" style="margin-top:6px"><input type="checkbox" id="withAuditor" /> Enable independent LLM auditor (Groq)</label>
-    
-    <div style="margin-top:12px">
-      <label style="font-size:12.5px; color:var(--dim)">Customer goal (for auditor context):</label>
-      <input type="text" id="customerGoal" placeholder="e.g., buy roofing materials for small shed" style="width:100%; background:var(--panel); border:1px solid var(--line); color:var(--ink); border-radius:6px; padding:6px 8px; margin-top:4px;" />
+    <div class="tabs">
+      <button class="tab active" id="tabBtn-customer" onclick="switchTab('customer')">🛒 Customer Orders</button>
+      <button class="tab" id="tabBtn-restock" onclick="switchTab('restock')">🤖 AI Restock</button>
+      <button class="tab" id="tabBtn-inventory" onclick="switchTab('inventory')">📦 Inventory</button>
+      <button class="tab" id="tabBtn-buyer" onclick="switchTab('buyer')">⚡ AI Buyer Checkout</button>
     </div>
     
-    <div style="margin-top:12px">
-      <label style="font-size:12.5px; color:var(--dim)">Groq API Key (for auditor):</label>
-      <input type="password" id="groqApiKey" placeholder="gsk_..." style="width:100%; background:var(--panel); border:1px solid var(--line); color:var(--ink); border-radius:6px; padding:6px 8px; margin-top:4px;" />
-    </div>
-    
-    <div class="collapsible" id="catalogCollapsible">
-      <div class="collapsible-header" onclick="toggleCatalog()">
-        <span>Raw Agent Catalog JSON</span>
-        <span id="catalogToggle">+</span>
+    <!-- 1. Customer Order Tab -->
+    <div id="customerTab" class="tab-content active">
+      <!-- Auto-Repeating Simulation Control Panel -->
+      <div class="sim-control-panel">
+        <div class="sim-info">
+          <div class="sim-title">
+            <span class="sim-dot" id="simStatusDot"></span>
+            <span>Live Order Simulation</span>
+          </div>
+          <div class="sim-counter" id="simulationStats">
+            Orders simulated: 0 | Restocks triggered: 0
+          </div>
+        </div>
+        <div class="sim-actions">
+          <button id="simToggleBtn" class="sim-btn" onclick="toggleSimulation()">
+            ▶ Start Simulation
+          </button>
+        </div>
       </div>
-      <div class="collapsible-content">
-        <pre id="catalogJson"></pre>
+
+      <h2 class="section-title">🛒 Customer Order Depletion</h2>
+      <div class="options-section">
+        <h4>Order Line Items (Simulate Inventory Depletion)</h4>
+        <div id="customerOrderItems"></div>
+        <div style="margin-top:10px">
+          <button class="secondary small" onclick="addCustomerOrderItem()">+ Add Item</button>
+        </div>
+      </div>
+      
+      <div class="api-section">
+        <label for="customerOrderNotes">Order Notes</label>
+        <input type="text" id="customerOrderNotes" placeholder="e.g., Contractor delivery order for Project Apex" />
+      </div>
+      
+      <div class="options-section" style="margin-top:12px;">
+        <label class="chk">
+          <input type="checkbox" id="customerAutoRestock" checked /> 
+          <strong>Auto-trigger AI Restock</strong> if stock falls below reorder threshold
+        </label>
+      </div>
+      
+      <div class="actions">
+        <button onclick="processCustomerOrder()">💰 Process Customer Order</button>
+        <button class="secondary" onclick="loadCustomerOrders()">🔄 Refresh Orders</button>
+      </div>
+      
+      <div style="margin-top:24px">
+        <h3 class="section-title">📋 Recent Customer Orders</h3>
+        <div id="customerOrdersList"><div class="muted">Loading recent customer orders...</div></div>
       </div>
     </div>
     
-    <div class="actions">
-      <button onclick="checkout()">Run checkout as AI buyer</button>
-      <button class="secondary" onclick="loadAudit()">Refresh audit trail</button>
+    <!-- 2. AI Restock Tab -->
+    <div id="restockTab" class="tab-content">
+      <h2 class="section-title">🤖 AI Restock Management</h2>
+      
+      <div class="options-section">
+        <h4>Inventory Threshold Check</h4>
+        <button class="secondary small" onclick="checkInventoryThreshold()">🔍 Check for Low Stock Items</button>
+        <div id="lowStockItems" style="margin-top:12px"></div>
+      </div>
+      
+      <div class="goal-section">
+        <h3>🎯 Autonomous Restock Trigger</h3>
+        <p style="margin:0 0 10px; font-size:12.5px; color:#92400e;">
+          Evaluates low-stock items and dispatches an autonomous Gemini Buyer Agent to plan, budget, and checkout replenishment orders through policy enforcement.
+        </p>
+        <div style="display:flex; gap:8px; margin-bottom:10px; flex-wrap:wrap;">
+          <input type="password" id="restockGeminiKey" placeholder="Gemini API Key (optional for live AI)" style="flex:1; min-width:180px;" />
+          <input type="password" id="restockGroqKey" placeholder="Groq API Key (optional for live auditor)" style="flex:1; min-width:180px;" />
+        </div>
+        <button onclick="triggerAutoRestock()">🚀 Run AI Inventory Check &amp; Restock</button>
+      </div>
+      
+      <div style="margin-top:24px">
+        <h3 class="section-title">⏳ Pending Restock Orders (Awaiting Approval)</h3>
+        <div id="pendingRestockOrders"><div class="muted">No pending orders.</div></div>
+      </div>
+      
+      <div style="margin-top:24px">
+        <h3 class="section-title">📜 Restock History</h3>
+        <div id="restockOrdersList"><div class="muted">Loading restock history...</div></div>
+      </div>
+    </div>
+    
+    <!-- 3. Inventory Tab -->
+    <div id="inventoryTab" class="tab-content">
+      <div class="row">
+        <h2 class="section-title" style="margin:0">📦 Current Inventory Levels</h2>
+        <button class="secondary small" onclick="loadInventory()">🔄 Refresh</button>
+      </div>
+      <div id="inventoryList" style="margin-top:14px;"><div class="muted">Loading inventory...</div></div>
+    </div>
+
+    <!-- 4. AI Buyer Checkout Tab (Restored Original Flow) -->
+    <div id="buyerTab" class="tab-content">
+      <h2 class="section-title">⚡ AI Buyer Checkout</h2>
+      
+      <div id="products"></div>
+      
+      <div class="goal-section">
+        <h3>🎯 Project Goal (AI Buyer Selection)</h3>
+        <textarea id="customerGoal" rows="2" placeholder="e.g., I need materials to build a 200 sq ft terracotta tiled shed with complete weatherproofing and installation."></textarea>
+      </div>
+      
+      <div class="options-section">
+        <h4>Buyer Agent &amp; Gateway Policies</h4>
+        <label class="chk">
+          <input type="checkbox" id="acceptUpsell" checked /> Auto-accept bounded upsell offers
+        </label>
+        <label class="chk">
+          <input type="checkbox" id="confirmHigh" /> I confirm high-value orders (&gt; INR 5,000)
+        </label>
+        <label class="chk">
+          <input type="checkbox" id="withAuditor" /> Enable independent LLM auditor (Groq)
+        </label>
+      </div>
+      
+      <div class="api-section" id="geminiSection">
+        <label for="geminiApiKey">Gemini API Key (for AI Buyer Agent NLU):</label>
+        <input type="password" id="geminiApiKey" placeholder="AIzaSy... (leave blank for deterministic mock buyer)" />
+      </div>
+
+      <div class="api-section" id="groqSection" style="display:none;">
+        <label for="groqApiKey">Groq API Key (for Independent Auditor):</label>
+        <input type="password" id="groqApiKey" placeholder="gsk_... (required when auditor enabled)" />
+      </div>
+      
+      <div class="collapsible" id="catalogCollapsible">
+        <div class="collapsible-header" onclick="toggleCatalog()">
+          <span>📄 Raw Agent Catalog JSON (.well-known/agent-catalog.json)</span>
+          <span id="catalogToggle">+</span>
+        </div>
+        <div class="collapsible-content">
+          <pre id="catalogJson"></pre>
+        </div>
+      </div>
+      
+      <div class="actions">
+        <button onclick="checkout()">🤖 Run Checkout as AI Buyer</button>
+        <button class="secondary" onclick="loadAudit()">🔄 Refresh Audit Trail</button>
+      </div>
     </div>
   </div>
+  
+  <!-- Right Panel: Results & Audit Timeline -->
   <div class="panel">
-    <div class="row"><strong>Checkout result</strong><span class="muted" id="resultMeta"></span></div>
-    <div id="resultBox" class="muted">Pick quantities on the left and run a checkout.</div>
-    <div class="row" style="margin-top:22px"><strong>Audit trail</strong><span class="muted" id="auditMeta"></span></div>
-    <table id="auditTable"><thead><tr><th>#</th><th>action</th><th>outcome</th><th>summary</th></tr></thead><tbody></tbody></table>
+    <!-- Live Order & Restock Pipeline Section -->
+    <div class="pipeline-section">
+      <div class="row" style="margin-bottom:8px;">
+        <h2 class="section-title" style="margin:0; display:flex; align-items:center; gap:8px;">
+          <span>⚡ Live Order &amp; Restock Pipeline</span>
+        </h2>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span class="muted" id="pipelineCounter" style="font-size:12px; font-weight:600;">Orders simulated: 0 | Restocks triggered: 0</span>
+          <button class="secondary small" onclick="clearPipelineTimeline()" style="padding:2px 8px; font-size:11px; cursor:pointer;" title="Clear timeline">Clear</button>
+        </div>
+      </div>
+      <div id="pipelineContainer" class="pipeline-container">
+        <div id="pipelineTimeline" class="pipeline-timeline">
+          <div class="pipeline-empty muted" style="padding:16px; text-align:center; font-size:13px;">
+            No orders processed yet. Click <strong>Start Simulation</strong> or <strong>Process Customer Order</strong> to observe the live step-by-step pipeline.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row" style="margin-top:24px">
+      <h2 class="section-title" style="margin:0">📊 Operation Result</h2>
+      <span class="muted" id="resultMeta"></span>
+    </div>
+    <div id="resultBox" class="muted">
+      Select line items on the left or run an AI buyer checkout to inspect policy checks and audit trails.
+    </div>
+    
+    <div class="row" style="margin-top:32px">
+      <h2 class="section-title" style="margin:0">🔍 Full Audit Trail</h2>
+      <span class="muted" id="auditMeta"></span>
+    </div>
+    <div id="auditTimeline" class="timeline"></div>
   </div>
 </div>
-<script>
-const SESSION = "session_" + Math.random().toString(36).slice(2, 8);
 
-async function loadCatalog() {
-  const res = await fetch('/.well-known/agent-catalog.json');
-  const data = await res.json();
-  document.getElementById('mode').textContent = data.merchant.description ? 'mock (see README to switch to live)' : '';
-  const box = document.getElementById('products');
-  box.innerHTML = '';
-  data.products.forEach(p => {
-    const div = document.createElement('div');
-    div.className = 'product';
-    div.innerHTML = `<div class="meta"><div class="name">${p.name}</div>
-      <div class="price">INR ${(p.price_paise/100).toFixed(2)} · ${p.category}</div></div>
-      <input type="number" min="0" value="0" data-id="${p.id}" />`;
-    box.appendChild(div);
+<script>
+let SESSION = "session_" + Math.random().toString(36).slice(2, 8);
+let cachedCatalog = null;
+
+// Initialize on DOM load
+document.addEventListener('DOMContentLoaded', function() {
+  const withAuditorEl = document.getElementById('withAuditor');
+  if (withAuditorEl) {
+    withAuditorEl.addEventListener('change', function() {
+      const groqSec = document.getElementById('groqSection');
+      if (groqSec) groqSec.style.display = this.checked ? 'block' : 'none';
+    });
+  }
+  
+  // Default to customer orders tab setup
+  switchTab('customer');
+  loadAudit();
+});
+
+/* =========================================================================
+   Tab Switching Logic
+   ========================================================================= */
+function switchTab(tabName) {
+  const tabs = ['customer', 'restock', 'inventory', 'buyer'];
+  tabs.forEach(t => {
+    const btn = document.getElementById(`tabBtn-${t}`);
+    const content = document.getElementById(`${t}Tab`);
+    if (btn) btn.classList.toggle('active', t === tabName);
+    if (content) content.classList.toggle('active', t === tabName);
   });
   
-  // Load raw catalog JSON for the collapsible section
-  document.getElementById('catalogJson').textContent = JSON.stringify(data, null, 2);
+  // Tab-specific lazy data loading to ensure fast load and no errors
+  if (tabName === 'customer') {
+    ensureCatalogLoaded().then(() => {
+      const container = document.getElementById('customerOrderItems');
+      if (container && container.children.length === 0) {
+        addCustomerOrderItem('sku_roof_sheet_std', 2);
+      }
+    });
+    loadCustomerOrders();
+  } else if (tabName === 'restock') {
+    checkInventoryThreshold();
+    loadRestockOrders();
+  } else if (tabName === 'inventory') {
+    loadInventory();
+  } else if (tabName === 'buyer') {
+    loadCatalog();
+  }
+}
+
+/* =========================================================================
+   Catalog Loader & Helpers
+   ========================================================================= */
+async function ensureCatalogLoaded() {
+  if (cachedCatalog) return cachedCatalog;
+  try {
+    const res = await fetch('/.well-known/agent-catalog.json');
+    cachedCatalog = await res.json();
+    return cachedCatalog;
+  } catch (err) {
+    console.error('Failed to load catalog:', err);
+    return null;
+  }
+}
+
+async function loadCatalog() {
+  const data = await ensureCatalogLoaded();
+  if (!data) return;
+  
+  const box = document.getElementById('products');
+  if (box) {
+    box.innerHTML = '';
+    data.products.forEach(p => {
+      const div = document.createElement('div');
+      div.className = 'product';
+      div.innerHTML = `
+        <div class="meta">
+          <div class="name">${p.name}</div>
+          <div class="price">INR ${(p.price_paise/100).toFixed(2)}</div>
+          <div class="description">${p.description}</div>
+          <div class="category">${p.category}</div>
+        </div>
+        <input type="number" min="0" value="0" data-id="${p.id}" placeholder="0" />
+      `;
+      box.appendChild(div);
+    });
+  }
+  
+  const rawBox = document.getElementById('catalogJson');
+  if (rawBox) {
+    rawBox.textContent = JSON.stringify(data, null, 2);
+  }
 }
 
 function toggleCatalog() {
   const collapsible = document.getElementById('catalogCollapsible');
   const toggle = document.getElementById('catalogToggle');
+  if (!collapsible || !toggle) return;
   collapsible.classList.toggle('open');
-  toggle.textContent = collapsible.classList.contains('open') ? '-' : '+';
+  toggle.textContent = collapsible.classList.contains('open') ? '−' : '+';
 }
 
-async function checkout() {
-  const items = [...document.querySelectorAll('#products input[type=number]')]
-    .map(i => ({product_id: i.dataset.id, qty: parseInt(i.value || '0', 10)}))
-    .filter(i => i.qty > 0);
-  if (!items.length) { alert('Set a quantity on at least one product.'); return; }
+/* =========================================================================
+   1. Customer Orders Tab Logic & Simulation Pipeline
+   ========================================================================= */
+let simulationActive = false;
+let simulationTimer = null;
+let simulatedOrdersCount = 0;
+let restocksTriggeredCount = 0;
 
-  const withAuditor = document.getElementById('withAuditor').checked;
-  if (withAuditor && !document.getElementById('groqApiKey').value) {
-    alert('Please provide Groq API key when auditor is enabled.');
+function updateSimulationCounter() {
+  const text = `Orders simulated: ${simulatedOrdersCount} | Restocks triggered: ${restocksTriggeredCount}`;
+  const el = document.getElementById('simulationStats');
+  if (el) el.textContent = text;
+  const el2 = document.getElementById('pipelineCounter');
+  if (el2) el2.textContent = text;
+}
+
+function stopSimulation() {
+  simulationActive = false;
+  if (simulationTimer) {
+    clearTimeout(simulationTimer);
+    simulationTimer = null;
+  }
+  const btn = document.getElementById('simToggleBtn');
+  if (btn) {
+    btn.innerHTML = '▶ Start Simulation';
+    btn.classList.remove('active');
+  }
+  const dot = document.getElementById('simStatusDot');
+  if (dot) {
+    dot.classList.remove('active');
+  }
+}
+
+function startSimulation() {
+  if (simulationActive) return;
+  simulationActive = true;
+  if (simulationTimer) {
+    clearTimeout(simulationTimer);
+    simulationTimer = null;
+  }
+  const btn = document.getElementById('simToggleBtn');
+  if (btn) {
+    btn.innerHTML = '⏹ Stop Simulation';
+    btn.classList.add('active');
+  }
+  const dot = document.getElementById('simStatusDot');
+  if (dot) {
+    dot.classList.add('active');
+  }
+  scheduleNextSimulation(600);
+}
+
+function toggleSimulation() {
+  if (simulationActive) {
+    stopSimulation();
+  } else {
+    startSimulation();
+  }
+}
+
+function scheduleNextSimulation(customDelay = null) {
+  if (!simulationActive) return;
+  if (simulationTimer) {
+    clearTimeout(simulationTimer);
+    simulationTimer = null;
+  }
+  const delay = customDelay !== null ? customDelay : (Math.random() * 3000 + 3000);
+  simulationTimer = setTimeout(async () => {
+    if (!simulationActive) return;
+    try {
+      await runSimulatedStep();
+    } catch (err) {
+      console.error('Simulation step error:', err);
+    }
+    if (simulationActive) {
+      scheduleNextSimulation();
+    }
+  }, delay);
+}
+
+async function runSimulatedStep() {
+  try {
+    const res = await fetch('/inventory');
+    const inv = await res.json();
+    if (!inv || !inv.length) return;
+    
+    // Tangible products with stock
+    const tangible = inv.filter(i => i.quantity > 0 && !i.sku.startsWith('sku_installation_'));
+    const pool = tangible.length > 0 ? tangible : inv.filter(i => i.quantity > 0);
+    if (!pool.length) return;
+    
+    const picked = pool[Math.floor(Math.random() * pool.length)];
+    
+    // Choose random quantity (1-5, with bias towards threshold to trigger demo restocks)
+    let qty = Math.floor(Math.random() * 5) + 1;
+    if (Math.random() < 0.45 && picked.quantity > picked.reorder_threshold) {
+      const dropQty = (picked.quantity - picked.reorder_threshold) + Math.floor(Math.random() * 3) + 1;
+      if (dropQty > 0 && dropQty <= picked.quantity) {
+        qty = dropQty;
+      }
+    }
+    qty = Math.min(qty, picked.quantity);
+    if (qty <= 0) qty = 1;
+    
+    const simItems = [{ sku: picked.sku, qty: qty }];
+    const simNotes = `Auto-simulated customer order (${picked.name})`;
+    
+    await processCustomerOrder(simItems, simNotes, true);
+  } catch (err) {
+    console.error('Error during simulated order generation:', err);
+  }
+}
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function scrollPipelineToBottom() {
+  const container = document.getElementById('pipelineTimeline');
+  if (container) {
+    container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
+  }
+}
+
+function clearPipelineTimeline() {
+  const container = document.getElementById('pipelineTimeline');
+  if (container) {
+    container.innerHTML = `
+      <div class="pipeline-empty muted" style="padding:16px; text-align:center; font-size:13px;">
+        Pipeline cleared. New events will appear here.
+      </div>
+    `;
+  }
+}
+
+async function appendPipelineSteps(orderResult, items) {
+  const container = document.getElementById('pipelineTimeline');
+  if (!container) return;
+  
+  const emptyPlaceholder = container.querySelector('.pipeline-empty');
+  if (emptyPlaceholder) emptyPlaceholder.remove();
+  
+  const isRestock = !!(orderResult.auto_restock && orderResult.auto_restock.triggered);
+  
+  const card = document.createElement('div');
+  card.className = `pipeline-order-card ${isRestock ? 'restock-triggered' : 'healthy-stock'}`;
+  container.appendChild(card);
+  
+  function addStep(text, style = '') {
+    const step = document.createElement('div');
+    step.className = 'pipeline-step';
+    const ts = new Date().toLocaleTimeString();
+    step.innerHTML = `
+      <span class="pipeline-step-text" ${style ? `style="${style}"` : ''}>${text}</span>
+      <span class="pipeline-time">[${ts}]</span>
+    `;
+    card.appendChild(step);
+    requestAnimationFrame(() => {
+      step.classList.add('revealed');
+      scrollPipelineToBottom();
+    });
+  }
+  
+  const processedItems = orderResult.items && orderResult.items.length > 0 ? orderResult.items : items;
+  const itemDesc = (processedItems || []).map(i => `${i.qty}x ${i.name || i.sku}`).join(', ');
+  
+  // Step 1: 🛒 Customer ordered {qty}x {product} [timestamp]
+  addStep(`🛒 Customer ordered ${itemDesc}`);
+  scrollPipelineToBottom();
+  
+  // If stock does NOT drop below threshold, show only the first line (no restock steps).
+  if (!isRestock) {
+    return;
+  }
+  
+  // Lookup latest stock and threshold from inventory
+  let invMap = {};
+  try {
+    const res = await fetch('/inventory');
+    const inv = await res.json();
+    (inv || []).forEach(i => { invMap[i.sku] = i; });
+  } catch (e) {}
+
+  const decisions = (orderResult.auto_restock && orderResult.auto_restock.restock_decisions) || [];
+  
+  for (const decision of decisions) {
+    const invItem = invMap[decision.sku] || {};
+    const newStock = decision.current_stock !== undefined ? decision.current_stock :
+      (invItem.quantity !== undefined ? invItem.quantity :
+      (processedItems[0] && processedItems[0].new_stock !== undefined ? processedItems[0].new_stock : '?'));
+    const threshold = decision.reorder_threshold !== undefined ? decision.reorder_threshold :
+      (invItem.reorder_threshold !== undefined ? invItem.reorder_threshold :
+      (processedItems[0] && processedItems[0].threshold !== undefined ? processedItems[0].threshold : '?'));
+    
+    let restockQty = 10;
+    if (decision.restock_qty) {
+      restockQty = decision.restock_qty;
+    } else if (decision.restock_items && decision.restock_items.length > 0) {
+      restockQty = decision.restock_items[0].qty || 10;
+    }
+    
+    // Step 2: 📉 Stock now {newStock} (below threshold of {threshold}) [timestamp]
+    await sleep(400);
+    addStep(`📉 Stock now ${newStock} (below threshold of ${threshold})`, 'color:#d97706;');
+    
+    // Step 3: 🤖 Gemini evaluating restock... [timestamp]
+    await sleep(400);
+    addStep(`🤖 Gemini evaluating restock...`, 'color:#2563eb;');
+    
+    // Step 4: ✅ Gemini placed restock order: +{restockQty} units [timestamp]
+    await sleep(400);
+    addStep(`✅ Gemini placed restock order: +${restockQty} units`, 'color:#059669; font-weight:600;');
+  }
+}
+
+async function addCustomerOrderItem(selectedSku = '', qty = 1) {
+  const data = await ensureCatalogLoaded();
+  const container = document.getElementById('customerOrderItems');
+  if (!container || !data) return;
+  
+  const row = document.createElement('div');
+  row.className = 'order-item-row';
+  
+  let optionsHtml = data.products.map(p => 
+    `<option value="${p.id}" ${p.id === selectedSku ? 'selected' : ''}>${p.name} (INR ${(p.price_paise/100).toFixed(2)})</option>`
+  ).join('');
+  
+  row.innerHTML = `
+    <select class="item-sku">${optionsHtml}</select>
+    <input type="number" class="item-qty" min="1" value="${qty}" />
+    <button class="remove-btn" title="Remove item" onclick="this.closest('.order-item-row').remove()">✕</button>
+  `;
+  container.appendChild(row);
+}
+
+async function processCustomerOrder(customItems = null, customNotes = null, isSimulated = false) {
+  let items = customItems;
+  if (!items) {
+    const itemRows = document.querySelectorAll('#customerOrderItems .order-item-row');
+    items = [];
+    itemRows.forEach(row => {
+      const sku = row.querySelector('.item-sku').value;
+      const qty = parseInt(row.querySelector('.item-qty').value || '0', 10);
+      if (sku && qty > 0) {
+        items.push({ sku, qty });
+      }
+    });
+  }
+  
+  if (!items || !items.length) {
+    if (!isSimulated) alert('Please add at least one item with quantity > 0.');
+    return;
+  }
+  
+  const notes = customNotes !== null ? customNotes : (document.getElementById('customerOrderNotes').value || '');
+  const autoRestockCheckbox = document.getElementById('customerAutoRestock');
+  const autoRestock = autoRestockCheckbox ? autoRestockCheckbox.checked : true;
+  const geminiApiKey = (document.getElementById('geminiApiKey') ? document.getElementById('geminiApiKey').value : '') || 
+                       (document.getElementById('restockGeminiKey') ? document.getElementById('restockGeminiKey').value : '');
+  const groqApiKey = (document.getElementById('groqApiKey') ? document.getElementById('groqApiKey').value : '') || 
+                     (document.getElementById('restockGroqKey') ? document.getElementById('restockGroqKey').value : '');
+
+  const body = {
+    items,
+    notes,
+    auto_restock: autoRestock,
+    gemini_api_key: geminiApiKey,
+    groq_api_key: groqApiKey
+  };
+  
+  try {
+    const res = await fetch('/customer-order', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    const data = await res.json();
+    
+    if (isSimulated) {
+      simulatedOrdersCount++;
+    }
+    if (data.auto_restock && data.auto_restock.triggered) {
+      restocksTriggeredCount++;
+    }
+    updateSimulationCounter();
+    
+    // Trigger the staggered Step-by-Step Pipeline
+    if (data.success) {
+      await appendPipelineSteps(data, items);
+    } else {
+      const container = document.getElementById('pipelineTimeline');
+      if (container) {
+        const emptyPlaceholder = container.querySelector('.pipeline-empty');
+        if (emptyPlaceholder) emptyPlaceholder.remove();
+        const card = document.createElement('div');
+        card.className = 'pipeline-order-card';
+        card.style.borderLeft = '4px solid var(--bad)';
+        card.innerHTML = `
+          <div class="pipeline-step revealed">
+            <span class="pipeline-step-text" style="color:var(--bad);">❌ ${data.message}</span>
+            <span class="pipeline-time">[${new Date().toLocaleTimeString()}]</span>
+          </div>
+        `;
+        container.appendChild(card);
+        scrollPipelineToBottom();
+      }
+    }
+    
+    // Render concise result box (without the old static badge)
+    const cls = data.success ? 'success' : 'failure';
+    const tag = data.success ? '✓ ORDER PROCESSED' : '✗ ORDER FAILED';
+    document.getElementById('resultBox').innerHTML = `
+      <div class="result ${cls}">
+        <span class="tag ${cls}">${tag}</span>
+        <div style="font-size:15px; margin-top:6px; font-weight:600;">${data.message}</div>
+        ${data.total_paise ? `<div style="margin-top:8px; font-size:14px;"><strong>Cart Total:</strong> INR ${(data.total_paise/100).toFixed(2)}</div>` : ''}
+        ${isSimulated ? `<div class="muted" style="margin-top:6px; font-size:12px;">Mode: Automated Order Simulation</div>` : ''}
+      </div>
+    `;
+    document.getElementById('resultMeta').textContent = 'Processed at ' + new Date().toLocaleTimeString();
+    
+    loadCustomerOrders();
+    loadInventory();
+    loadAudit();
+  } catch (err) {
+    console.error('Failed to process customer order:', err);
+    if (!isSimulated) {
+      alert('Failed to process customer order: ' + err.message);
+    }
+  }
+}
+
+async function loadCustomerOrders() {
+  const container = document.getElementById('customerOrdersList');
+  if (!container) return;
+  
+  try {
+    const res = await fetch('/customer-orders?limit=15');
+    const orders = await res.json();
+    
+    if (!orders || orders.length === 0) {
+      container.innerHTML = '<div class="muted">No customer orders recorded yet.</div>';
+      return;
+    }
+    
+    container.innerHTML = orders.map(o => {
+      let items = [];
+      try { items = typeof o.items === 'string' ? JSON.parse(o.items) : o.items; } catch (e) {}
+      const itemsDesc = items.map(i => `${i.qty}x ${i.name || i.sku}`).join(', ');
+      
+      return `
+        <div class="order-card">
+          <div class="order-card-header">
+            <span class="order-card-title">Order #${o.id} &bull; INR ${(o.total_paise/100).toFixed(2)}</span>
+            <span class="order-card-date">${new Date(o.order_date).toLocaleString()}</span>
+          </div>
+          <div class="order-card-items"><strong>Items:</strong> ${itemsDesc || 'None'}</div>
+          ${o.notes ? `<div class="order-card-items" style="color:var(--ink);"><strong>Notes:</strong> ${o.notes}</div>` : ''}
+        </div>
+      `;
+    }).join('');
+  } catch (err) {
+    container.innerHTML = `<div class="muted" style="color:var(--bad);">Error loading customer orders: ${err.message}</div>`;
+  }
+}
+
+/* =========================================================================
+   2. AI Restock Tab Logic
+   ========================================================================= */
+async function checkInventoryThreshold() {
+  const container = document.getElementById('lowStockItems');
+  if (!container) return;
+  
+  try {
+    const res = await fetch('/inventory/check');
+    const items = await res.json();
+    
+    if (!items || items.length === 0) {
+      container.innerHTML = `
+        <div style="background:rgba(16,185,129,0.08); border:1px solid var(--ok); border-radius:8px; padding:10px 14px; font-size:13px; color:#059669; font-weight:600;">
+          ✓ All inventory levels healthy. No SKUs below reorder threshold.
+        </div>
+      `;
+      return;
+    }
+    
+    container.innerHTML = `
+      <div style="font-size:12.5px; font-weight:600; color:var(--bad); margin-bottom:6px;">⚠️ ${items.length} item(s) below reorder threshold:</div>
+      <table class="data-table">
+        <thead>
+          <tr><th>SKU / Name</th><th>Stock</th><th>Threshold</th><th>Action Needed</th></tr>
+        </thead>
+        <tbody>
+          ${items.map(i => `
+            <tr>
+              <td><strong>${i.name}</strong><br><span class="muted">${i.sku}</span></td>
+              <td><span class="status-badge low-stock">${i.quantity}</span></td>
+              <td>${i.reorder_threshold}</td>
+              <td style="color:var(--bad); font-weight:600;">Needs Restock</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    `;
+  } catch (err) {
+    container.innerHTML = `<div class="muted" style="color:var(--bad);">Error checking threshold: ${err.message}</div>`;
+  }
+}
+
+async function triggerAutoRestock() {
+  const geminiKey = document.getElementById('restockGeminiKey').value || 
+                    (document.getElementById('geminiApiKey') ? document.getElementById('geminiApiKey').value : '');
+  const groqKey = document.getElementById('restockGroqKey').value || 
+                  (document.getElementById('groqApiKey') ? document.getElementById('groqApiKey').value : '');
+  
+  const body = {
+    gemini_api_key: geminiKey,
+    groq_api_key: groqKey
+  };
+  
+  try {
+    const res = await fetch('/restock/check', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    const data = await res.json();
+    
+    const count = data.restock_decisions ? data.restock_decisions.length : 0;
+    
+    document.getElementById('resultBox').innerHTML = `
+      <div class="result ${count > 0 ? 'warning' : 'success'}">
+        <span class="tag ${count > 0 ? 'warning' : 'success'}">${count > 0 ? '🤖 RESTOCK PIPELINE EXECUTED' : '✓ INVENTORY HEALTHY'}</span>
+        <div style="font-size:15px; margin-top:6px; font-weight:600;">${data.message}</div>
+        ${data.restock_decisions ? `
+          <div style="margin-top:12px;">
+            ${data.restock_decisions.map(d => `
+              <div style="background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:10px; margin-top:8px;">
+                <div style="display:flex; justify-content:space-between; font-weight:600; font-size:13px;">
+                  <span>${d.name} (${d.sku})</span>
+                  <span>INR ${(d.total_paise/100).toFixed(2)}</span>
+                </div>
+                <div class="muted" style="font-size:12px; margin-top:4px;">
+                  Current: ${d.current_stock ?? 'N/A'} | Threshold: ${d.threshold ?? 'N/A'} | AI Mode: ${d.ai_mode || 'Mock'}
+                </div>
+                ${d.checkout_result ? `
+                  <div style="font-size:12px; margin-top:4px; font-weight:600; color:${d.checkout_result.success ? 'var(--ok)' : (d.checkout_result.needs_approval ? 'var(--warn)' : 'var(--bad)')}">
+                    Status: ${d.checkout_result.success ? 'Auto-Completed & Stock Updated' : (d.checkout_result.needs_approval ? 'Held by Auditor — Needs Approval' : 'Blocked')}
+                  </div>
+                ` : ''}
+              </div>
+            `).join('')}
+          </div>
+        ` : ''}
+      </div>
+    `;
+    document.getElementById('resultMeta').textContent = 'Restock Check at ' + new Date().toLocaleTimeString();
+    
+    checkInventoryThreshold();
+    loadRestockOrders();
+    loadInventory();
+    loadAudit();
+  } catch (err) {
+    alert('Restock trigger error: ' + err.message);
+  }
+}
+
+async function loadRestockOrders() {
+  const pendingContainer = document.getElementById('pendingRestockOrders');
+  const historyContainer = document.getElementById('restockOrdersList');
+  
+  try {
+    const res = await fetch('/restock-orders?limit=25');
+    const orders = await res.json();
+    
+    if (!orders || orders.length === 0) {
+      if (pendingContainer) pendingContainer.innerHTML = '<div class="muted">No pending restock orders.</div>';
+      if (historyContainer) historyContainer.innerHTML = '<div class="muted">No restock orders in history.</div>';
+      return;
+    }
+    
+    const pending = orders.filter(o => o.status === 'pending');
+    const history = orders.filter(o => o.status !== 'pending');
+    
+    if (pendingContainer) {
+      if (pending.length === 0) {
+        pendingContainer.innerHTML = '<div class="muted">No pending restock orders awaiting approval.</div>';
+      } else {
+        pendingContainer.innerHTML = pending.map(o => {
+          let items = [];
+          try { items = JSON.parse(o.items); } catch(e) {}
+          const itemsDesc = items.map(i => `${i.qty}x ${i.product_id || i.sku}`).join(', ');
+          
+          return `
+            <div class="order-card" style="border-left:4px solid var(--warn);">
+              <div class="order-card-header">
+                <span class="order-card-title">Restock Order #${o.id} &bull; INR ${(o.total_paise/100).toFixed(2)}</span>
+                <span class="status-badge pending">Pending Approval</span>
+              </div>
+              <div class="order-card-items"><strong>Items:</strong> ${itemsDesc}</div>
+              ${o.auditor_reasoning ? `<div class="order-card-items" style="color:var(--warn); margin-top:6px;"><strong>Auditor:</strong> ${o.auditor_reasoning}</div>` : ''}
+              ${o.ai_decision_context ? `<div class="order-card-items" style="margin-top:4px;"><strong>Context:</strong> ${o.ai_decision_context}</div>` : ''}
+              <div class="actions" style="margin-top:10px;">
+                <button class="success-btn small" onclick="handleRestockAction(${o.id}, 'approve')">✓ Approve Restock</button>
+                <button class="danger-btn small" onclick="handleRestockAction(${o.id}, 'reject')">✕ Reject</button>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+    }
+    
+    if (historyContainer) {
+      if (history.length === 0) {
+        historyContainer.innerHTML = '<div class="muted">No completed or rejected restock orders yet.</div>';
+      } else {
+        historyContainer.innerHTML = history.map(o => {
+          let items = [];
+          try { items = JSON.parse(o.items); } catch(e) {}
+          const itemsDesc = items.map(i => `${i.qty}x ${i.product_id || i.sku}`).join(', ');
+          const statusCls = o.status === 'completed' || o.status === 'approved' ? 'completed' : 'rejected';
+          
+          return `
+            <div class="order-card">
+              <div class="order-card-header">
+                <span class="order-card-title">Restock Order #${o.id} &bull; INR ${(o.total_paise/100).toFixed(2)}</span>
+                <span class="status-badge ${statusCls}">${o.status.toUpperCase()}</span>
+              </div>
+              <div class="order-card-items"><strong>Items:</strong> ${itemsDesc}</div>
+              <div class="order-card-date" style="margin-top:4px;">Date: ${new Date(o.order_date).toLocaleString()}</div>
+            </div>
+          `;
+        }).join('');
+      }
+    }
+  } catch (err) {
+    if (pendingContainer) pendingContainer.innerHTML = `<div class="muted" style="color:var(--bad);">Error: ${err.message}</div>`;
+  }
+}
+
+async function handleRestockAction(orderId, action) {
+  try {
+    const res = await fetch('/restock/approve', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ order_id: orderId, action: action })
+    });
+    const data = await res.json();
+    alert(`Order #${orderId}: ${data.message}`);
+    loadRestockOrders();
+    loadInventory();
+    loadAudit();
+  } catch (err) {
+    alert('Action failed: ' + err.message);
+  }
+}
+
+/* =========================================================================
+   3. Inventory Tab Logic
+   ========================================================================= */
+async function loadInventory() {
+  const container = document.getElementById('inventoryList');
+  if (!container) return;
+  
+  try {
+    const res = await fetch('/inventory');
+    const items = await res.json();
+    
+    if (!items || items.length === 0) {
+      container.innerHTML = '<div class="muted">No inventory records found.</div>';
+      return;
+    }
+    
+    container.innerHTML = `
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>SKU</th>
+            <th>Product Name</th>
+            <th>Current Stock</th>
+            <th>Reorder Threshold</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${items.map(item => {
+            const isLow = item.quantity <= item.reorder_threshold;
+            return `
+              <tr>
+                <td><code>${item.sku}</code></td>
+                <td><strong>${item.name}</strong></td>
+                <td><strong style="font-size:14px;">${item.quantity}</strong></td>
+                <td>${item.reorder_threshold}</td>
+                <td>
+                  <span class="status-badge ${isLow ? 'low-stock' : 'in-stock'}">
+                    ${isLow ? '⚠️ Low Stock' : '✓ In Stock'}
+                  </span>
+                </td>
+              </tr>
+            `;
+          }).join('')}
+        </tbody>
+      </table>
+    `;
+  } catch (err) {
+    container.innerHTML = `<div class="muted" style="color:var(--bad);">Error loading inventory: ${err.message}</div>`;
+  }
+}
+
+/* =========================================================================
+   4. AI Buyer Checkout Logic (Original Flow)
+   ========================================================================= */
+async function checkout() {
+  SESSION = "session_" + Math.random().toString(36).slice(2, 8);
+  
+  const items = [...document.querySelectorAll('#products input[type=number]')]
+    .map(i => ({ product_id: i.dataset.id, qty: parseInt(i.value || '0', 10) }))
+    .filter(i => i.qty > 0);
+  
+  const customerGoal = document.getElementById('customerGoal') ? document.getElementById('customerGoal').value : '';
+  
+  if (!items.length && !customerGoal) { 
+    alert('Please either select product quantities or provide a project goal for AI buyer selection.'); 
+    return; 
+  }
+
+  const withAuditorEl = document.getElementById('withAuditor');
+  const withAuditor = withAuditorEl ? withAuditorEl.checked : false;
+  const groqApiKey = document.getElementById('groqApiKey') ? document.getElementById('groqApiKey').value : '';
+  const geminiApiKey = document.getElementById('geminiApiKey') ? document.getElementById('geminiApiKey').value : '';
+
+  if (withAuditor && !groqApiKey) {
+    alert('Please provide a Groq API key when the independent auditor is enabled.');
     return;
   }
 
   const body = {
     session_id: SESSION,
     items,
-    accept_upsell: document.getElementById('acceptUpsell').checked,
-    buyer_confirmed_high_value: document.getElementById('confirmHigh').checked,
+    accept_upsell: document.getElementById('acceptUpsell') ? document.getElementById('acceptUpsell').checked : true,
+    buyer_confirmed_high_value: document.getElementById('confirmHigh') ? document.getElementById('confirmHigh').checked : false,
     with_auditor: withAuditor,
-    customer_goal: document.getElementById('customerGoal').value,
-    groq_api_key: document.getElementById('groqApiKey').value,
+    customer_goal: customerGoal,
+    groq_api_key: groqApiKey,
+    gemini_api_key: geminiApiKey,
   };
-  const res = await fetch('/agent/checkout', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)});
-  const data = await res.json();
-  renderResult(data);
-  loadAudit();
+  
+  try {
+    const res = await fetch('/agent/checkout', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    const data = await res.json();
+    renderResult(data);
+    loadAudit();
+  } catch (err) {
+    alert('Checkout request failed: ' + err.message);
+  }
 }
 
 function renderResult(data) {
   const cls = data.success ? 'success' : (data.needs_confirmation ? 'blocked' : 'failure');
-  const tag = data.success ? 'success' : (data.needs_confirmation ? 'needs confirmation' : 'blocked / failed');
+  const tag = data.success ? '✓ SUCCESS' : (data.needs_confirmation ? '⏳ REQUIRES CONFIRMATION' : '✗ FAILED');
   
   let auditHtml = '';
   if (data.audit_result) {
-    const auditCls = data.audit_result.risk_flag === 'flagged_for_review' ? 'blocked' : 'success';
-    const auditTag = data.audit_result.risk_flag === 'flagged_for_review' ? 'FLAGGED' : 'CLEAN';
+    const auditCls = data.audit_result.risk_flag === 'flagged_for_review' ? 'warning' : 'success';
+    const auditTag = data.audit_result.risk_flag === 'flagged_for_review' ? '⚠️ FLAGGED FOR REVIEW' : '✓ CLEAN';
     auditHtml = `
-      <div class="muted" style="margin-top:8px; padding-top:8px; border-top:1px solid var(--line)">
-        <strong>LLM Auditor (Groq):</strong> 
-        <span class="tag ${auditCls}" style="margin-left:6px">${auditTag}</span>
-        <div style="margin-top:4px">${data.audit_result.reasoning}</div>
-        <div class="muted" style="font-size:11px; margin-top:2px">Model: ${data.audit_result.model_used}</div>
+      <div style="margin-top:14px; padding-top:14px; border-top:1px solid var(--line)">
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px">
+          <strong>🤖 Independent AI Auditor (Groq)</strong>
+          <span class="model-badge groq">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+            Groq
+          </span>
+          <span class="tag ${auditCls}">${auditTag}</span>
+        </div>
+        <div style="margin-top:6px; font-size:13.5px; line-height:1.45">${data.audit_result.reasoning}</div>
+        <div class="muted" style="font-size:11px; margin-top:4px">Model: ${data.audit_result.model_used}</div>
       </div>`;
+  }
+
+  let approvalActionHtml = '';
+  if (data.needs_confirmation || (!data.success && data.audit_result && data.audit_result.risk_flag === 'flagged_for_review')) {
+    approvalActionHtml = `
+      <div style="margin-top:14px; padding-top:12px; border-top:1px solid var(--line);">
+        <button class="success-btn" onclick="approveHeldOrder('${data.session_id}')">
+          ✓ Override / Approve Flagged Order
+        </button>
+      </div>
+    `;
   }
   
   document.getElementById('resultBox').innerHTML = `
     <div class="result ${cls}">
       <span class="tag ${cls}">${tag}</span>
-      <div>${data.message}</div>
-      ${data.upsell_added ? `<div class="muted" style="margin-top:6px">Upsell added: ${data.upsell_added}</div>` : ''}
-      ${data.remediation ? `<div class="muted" style="margin-top:6px">Remediation: ${data.remediation}</div>` : ''}
-      <div class="muted" style="margin-top:6px">Cart total: INR ${(data.order_total_paise/100).toFixed(2)}</div>
+      <div style="font-size:15px; margin-top:6px; font-weight:600;">${data.message}</div>
+      ${data.upsell_added ? `<div class="muted" style="margin-top:8px">🎁 <strong>Smart Upsell Added:</strong> ${data.upsell_added}</div>` : ''}
+      ${data.remediation ? `<div class="muted" style="margin-top:8px">💡 <strong>Remediation:</strong> ${data.remediation}</div>` : ''}
+      ${data.order_total_paise ? `<div style="margin-top:10px; font-size:15px; font-weight:700">Total: INR ${(data.order_total_paise/100).toFixed(2)}</div>` : ''}
+      ${data.ai_mode ? `<div class="muted" style="margin-top:8px; padding-top:8px; border-top:1px solid var(--line)">
+        <strong>🤖 AI Buyer Mode:</strong> ${data.ai_mode === 'gemini' ? 'Gemini API' : (data.ai_mode === 'mock_fallback' ? 'Mock (API failed)' : 'Deterministic Mock')}
+        ${data.ai_error ? `<div style="margin-top:4px; color:var(--bad)">Error: ${data.ai_error}</div>` : ''}
+      </div>` : ''}
       ${auditHtml}
+      ${approvalActionHtml}
     </div>`;
-  document.getElementById('resultMeta').textContent = 'session ' + data.session_id;
+  document.getElementById('resultMeta').textContent = 'Session: ' + data.session_id;
 }
 
+async function approveHeldOrder(sessionId) {
+  try {
+    const res = await fetch('/held-order/approve', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ session_id: sessionId, buyer_confirmed_high_value: true })
+    });
+    const data = await res.json();
+    renderResult(data);
+    loadAudit();
+  } catch (err) {
+    alert('Failed to approve held order: ' + err.message);
+  }
+}
+
+/* =========================================================================
+   Audit Trail Rendering
+   ========================================================================= */
 async function loadAudit() {
-  const res = await fetch('/audit?session_id=' + SESSION);
-  const entries = await res.json();
-  const tbody = document.querySelector('#auditTable tbody');
-  tbody.innerHTML = entries.map((e,i) => `<tr>
-      <td>${i+1}</td><td>${e.action_type}</td>
-      <td class="outcome-${e.outcome}">${e.outcome}</td>
-      <td>${e.summary}</td></tr>`).join('');
-  document.getElementById('auditMeta').textContent = entries.length + ' entries · this session';
+  try {
+    const res = await fetch('/audit' + (SESSION ? `?session_id=${SESSION}` : ''));
+    let entries = await res.json();
+    
+    // If no entries for this session, load all recent entries
+    if (!entries || entries.length === 0) {
+      const allRes = await fetch('/audit');
+      entries = await allRes.json();
+    }
+    
+    const timeline = document.getElementById('auditTimeline');
+    if (!timeline) return;
+    
+    let html = '';
+    let policyPassed = false;
+    let auditorFlagged = false;
+    
+    (entries || []).forEach(e => {
+      const outcomeClass = (e.outcome || '').toLowerCase();
+      const outcomeLabel = (e.outcome || '').toUpperCase();
+      
+      if (e.action_type === 'policy_check' && e.outcome === 'ALLOWED') {
+        policyPassed = true;
+      }
+      if (e.action_type === 'llm_audit_review' && (e.outcome === 'FLAGGED' || outcomeClass === 'flagged')) {
+        auditorFlagged = true;
+      }
+      
+      let policyHtml = '';
+      if (e.policy_checks && e.policy_checks.length > 0) {
+        policyHtml = `<div class="timeline-policy">
+          ${e.policy_checks.map(check => `
+            <div class="policy-item">
+              <span class="status ${check.passed ? 'pass' : 'fail'}">${check.passed ? 'PASS' : 'FAIL'}</span>
+              <span>${check.rule}: ${check.detail}</span>
+            </div>
+          `).join('')}
+        </div>`;
+      }
+      
+      html += `
+        <div class="timeline-item ${outcomeClass}">
+          <div class="timeline-header">
+            <span class="timeline-action">${(e.action_type || '').replace(/_/g, ' ')}</span>
+            <span class="timeline-outcome ${outcomeClass}">${outcomeLabel}</span>
+          </div>
+          <div class="timeline-summary">${e.summary || ''}</div>
+          ${e.explanation ? `<div class="timeline-explanation">${e.explanation}</div>` : ''}
+          ${policyHtml}
+        </div>`;
+    });
+    
+    if (policyPassed && auditorFlagged) {
+      html = `
+        <div class="disagreement-alert">
+          <h4><span style="font-size:16px;">⚠️</span> Important: Policy vs Auditor Disagreement</h4>
+          <p>The deterministic policy engine allowed this transaction, but the independent Groq auditor flagged it for human review. This showcases multi-perspective AI oversight catching nuances outside hard rules.</p>
+        </div>
+      ` + html;
+    }
+    
+    timeline.innerHTML = html || '<div class="muted">No audit entries yet. Run a customer order or checkout to see the audit trail.</div>';
+    const auditMetaEl = document.getElementById('auditMeta');
+    if (auditMetaEl) {
+      auditMetaEl.textContent = `${(entries || []).length} entries`;
+    }
+  } catch (err) {
+    console.error('Failed to load audit:', err);
+  }
 }
-
-loadCatalog();
-loadAudit();
 </script>
 </body>
 </html>
