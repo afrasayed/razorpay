@@ -31,11 +31,18 @@ print(f"Low stock items: {len(low_stock)}")
 for item in low_stock:
     print(f"  {item['sku']}: {item['quantity']} (threshold: {item['reorder_threshold']})")
 
+import os
+
 # Trigger AI restock check
 print("\nStep 4: Triggering AI restock check...")
+gemini_key = os.environ.get("GEMINI_API_KEY", "")
+groq_key = os.environ.get("GROQ_API_KEY", "")
+if not gemini_key:
+    print("[INFO] GEMINI_API_KEY environment variable not set. Running in deterministic mock mode.")
+
 restock_request = {
-    "gemini_api_key": "AQ.Ab8RN6L_SCh8wRMxI5VmVKBx0ggYr5yHHHxKcDSVAmicCPMsWA",
-    "groq_api_key": ""
+    "gemini_api_key": gemini_key,
+    "groq_api_key": groq_key
 }
 
 restock_response = requests.post("http://127.0.0.1:8000/restock/check", json=restock_request)

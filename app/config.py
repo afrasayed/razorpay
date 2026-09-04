@@ -5,6 +5,23 @@ is hardcoded anywhere else in the codebase -- change limits here only.
 """
 import os
 
+# Automatically load .env file from project root if it exists
+def _load_env_file():
+    env_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), ".env")
+    if os.path.exists(env_path):
+        with open(env_path, "r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line or line.startswith("#") or "=" not in line:
+                    continue
+                k, v = line.split("=", 1)
+                k = k.strip()
+                v = v.strip().strip("'").strip('"')
+                if k and k not in os.environ:
+                    os.environ[k] = v
+
+_load_env_file()
+
 # --- Razorpay mode ---
 # "mock"  -> in-memory simulated Razorpay responses, no network needed. Default,
 #            so this repo runs end to end with zero credentials.
