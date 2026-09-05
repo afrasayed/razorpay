@@ -1,136 +1,54 @@
-# Sentinel — Multi-Agent Autonomous Commerce & Oversight Engine
+# Sentinel — Multi-Agent Autonomous Commerce Engine
 
-> **AI agents generate, evaluate, and independently audit every transaction — so no single AI's judgment goes unchecked.**
+AI agents generate, evaluate, and independently audit every transaction — so no single AI's judgment goes unchecked.
 
-**TL;DR:** Three independent AI agents (Groq customer agent, Gemini restock agent, Groq auditor) generate, execute, and cross-check every transaction — live API calls throughout, multi-tenant across 5 businesses.
-
----
-
-## Honest Status (as of submission)
-
+## Honest Status
 | Component | Status |
 |---|---|
-| Groq Customer Agent (order generation) | LIVE — real API calls to Groq |
-| Groq Independent Auditor | LIVE — real API calls to Groq |
-| Gemini Restock Agent | LIVE — real API calls to Google Gemini |
-| Razorpay Checkout | MOCK MODE — test order IDs, no real payment processing (RAZORPAY_MODE=mock) |
-| Multi-company inventory isolation | LIVE — 5 businesses, fully tested, zero cross-company data leakage |
-| Policy engine (spending caps, category rules) | LIVE — deterministic rule enforcement before every transaction |
+| Groq Customer Agent | LIVE |
+| Groq Independent Auditor | LIVE |
+| Gemini Restock Agent | LIVE |
+| Razorpay Checkout | MOCK MODE (test order IDs) |
+| Multi-company isolation | LIVE — 5 businesses, zero data leakage |
+| Policy engine | LIVE — deterministic rule enforcement |
 
----
+## Problem
+AI-driven commerce systems typically trust a single AI's judgment with no independent verification — a hallucination or bad decision goes unchecked straight to checkout. Sentinel separates reasoning, rule enforcement, and auditing into independent layers.
 
-## 1. Problem Statement
+## Architecture
+Customer Order → Policy Check → Stock Depletion → Gemini Restock → Groq Audit → Checkout → Audit Log
 
-Most AI-driven commerce systems rely on a single AI's judgment with zero independent verification, allowing hallucinations or manipulated actions to commit funds unchecked. High-trust autonomous commerce requires a strict division of powers: one agent to reason, deterministic rules to enforce business boundaries, and an independent auditor to verify intent before checkout.
 
----
+- **Customer Layer** (Groq/Llama 3.3) — generates realistic orders
+- **Policy Layer** — enforces spend caps, quantity limits, category rules
+- **Reasoning Layer** (Gemini) — autonomous restock decisions
+- **Audit Layer** (Groq) — independent auditor flags anomalies, separate from policy
+- **Ledger Layer** — full append-only audit trail
 
-## 2. Architecture Overview
+## Key Features
+- **Independent verification** — policy and auditor disagree openly; nothing's hidden
+- **Multi-tenant** — 5 isolated businesses (Afra Infra, Tropicana, Amul, Minimalist, Nestle)
+- **Live simulation mode** — autonomous order/restock loop for demos
+- **Command Centre** — full order + restock + audit history in one view
 
-Sentinel structures transaction execution across **5 decoupled infrastructure layers**:
+## Tech Stack
+FastAPI · Groq (Llama 3.3) · Google Gemini · Razorpay (mock) · SQLite
 
-1. **Customer Layer** (`Groq / Llama 3.3`): Simulates realistic B2B/B2C customer order demands and inventory depletions.
-2. **Policy Layer** (`Deterministic Rule Engine`): Enforces non-negotiable financial caps (order limits, session spend, quantity ceilings, category allowlists) before any money API is touched.
-3. **Reasoning Layer** (`Google Gemini`): Autonomous restock decision engine that evaluates stock deficits against lead times and formulates replenishment orders.
-4. **Audit Layer** (`Groq Independent Auditor`): An isolated LLM auditor running independently from the reasoning model to detect goal-cart mismatches, quantity spikes, and unusual spend patterns.
-5. **Ledger Layer** (`Immutable Audit Trail`): Append-only event log capturing every prompt, policy evaluation, auditor verdict, and payment transaction.
-
-### Transaction Flow
-```text
-Customer Order
-      │
-      ▼
-Policy Check (Hard Rules) ──[Blocked]──► Order Rejected
-      │
-      ▼ [Passed]
-Stock Depletion
-      │
-      ▼
-Restock Trigger (Google Gemini Autonomous Buyer)
-      │
-      ▼
-Independent Audit (Groq Oversight Layer)
-      │
-      ├──[Flagged / Spike Detected]──► Held for Human Operator Approval
-      │                                       │
-      │                                 [Override]
-      ▼ [Approved]                            │
-Razorpay Checkout ◄───────────────────────────┘
-      │
-      ▼
-Immutable Audit Log & Command Centre Feed
-```
-
----
-
-## 3. Key Features
-
-- **Multi-Agent Verification**: Deterministic policy rules and an independent LLM auditor cross-check restock orders, routing anomalies to operator review.
-- **Multi-Tenant Isolation**: Complete catalog and inventory isolation across 5 distinct business domains (Afra Infra, Tropicana, Amul, Minimalist, Nestle).
-- **Live Simulation Mode**: Single-click autonomous simulation loops triggering real-time customer demand, threshold breaches, automated restock calculations, and independent audits.
-- **Command Centre & Audit Trail**: Real-time feed of orders, restocks, policy checks, and payments with an explicit operator override workflow.
-
----
-
-## 4. Tech Stack
-
-- **Backend**: Python 3.12, FastAPI, Uvicorn
-- **Customer Generation & Independent Auditor**: Groq Cloud (`Llama 3.3 70B` / `openai/gpt-oss-120b`)
-- **Autonomous Restock Reasoning**: Google Gemini (`gemini-flash-latest` / `gemini-3.6-flash`)
-- **Payments Gateway**: Razorpay Orders API (Mock mode enabled by default; zero external credentials required for local demo)
-- **Persistence & State**: SQLite (`data/inventory.db`) with JSONL append-only audit trail (`data/audit_log.jsonl`)
-- **Frontend Dashboard**: Responsive Vanilla HTML5/CSS3/ES6 (Zero heavy dependencies, dark technical UI)
-
----
-
-## 5. Setup & Running Locally
-
-### 1. Clone & Install
+## Setup
 ```bash
 git clone https://github.com/afrasayed/razorpay.git
 cd razorpay
 pip install -r requirements.txt
-```
-
-### 2. Configure Environment Variables
-Copy `.env.example` to `.env`:
-```bash
 cp .env.example .env
+# add GROQ_API_KEY, GEMINI_API_KEY, RAZORPAY_MODE=mock
+uvicorn app.main:app --reload --port 8000
 ```
 
-Set the following variables in `.env`:
-```env
-# Required for Independent Auditor & Customer Agent
-GROQ_API_KEY=gsk_your_groq_api_key_here
-GROQ_AUDITOR_MODEL=llama-3.3-70b-versatile
+## What Broke & How It Was Fixed
+- **Silent auditor fail-open** — a failed audit call used to display as "approved." Fixed with explicit tri-state handling (Approved / Flagged / Failed).
+- **Leaked API key** — caught by GitHub push protection; migrated all secrets to `.env`.
+- **Policy caps too low** — restock orders were universally rejected; recalibrated limits for realistic B2B order sizes.
+- **Invalid Gemini key format** — an OAuth token was mistakenly used instead of an API key; fixed and added model fallbacks.
 
-# Required for Autonomous Restock Buyer
-GEMINI_API_KEY=your_gemini_api_key_here
-GEMINI_MODEL=gemini-flash-latest
-
-# Payment Mode ("mock" runs full loop offline without Razorpay account)
-RAZORPAY_MODE=mock
-```
-
-### 3. Launch Application
-```bash
-uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
-```
-Open **`http://127.0.0.1:8000`** in your browser. Interactive Swagger API docs are available at **`/docs`**.
-
----
-
-## 6. What Broke & How It Was Fixed
-
-Building a multi-agent autonomous system surfaces complex integration failure modes. Here is how we engineered reliability into the system:
-
-- **Silent Auditor Fail-Open Contradiction**: An early bug allowed failed/errored auditor calls (e.g. invalid API keys or timeouts) to fall through to a clean state. We re-engineered the auditor pipeline with explicit tri-state error handling (`✓ APPROVED`, `⚠ FLAGGED`, `✗ AUDIT FAILED`) so system errors never mask as approvals.
-- **GitHub Push Protection on API Keys**: A test API key was flagged during a pre-commit push. We migrated all credentials strictly to `.env` loaders and implemented automated scrubbing across test fixtures.
-- **Restock Policy Cap Recalibration**: Initial single-order limits were capped at ₹10,000, causing 100% of standard B2B restock batches (typically ₹14,000–₹25,000) to be blocked by policy. We recalibrated policy thresholds to align with B2B wholesale replenishment while keeping guardrails tight.
-- **Gemini Key & Model Deprecation Handling**: Google Cloud tokens (`AQ.Ab8...`) and decommissioned model names caused silent 401/404 fallbacks. We fixed the configuration to use `gemini-flash-latest` with automatic cascading fallbacks across `["gemini-flash-latest", "gemini-3.6-flash", "gemini-2.0-flash"]`.
-
----
-
-## 7. Future Work
-
-- **Autonomous Agent-to-Agent Price & Volume Negotiation**: Extending the customer-merchant boundary from static ordering to dynamic agentic bargaining, where the buyer agent negotiates bulk tier discounts against merchant volume policies before committing to checkout.
+## Future Work
+Agent-to-agent negotiation — letting the customer and merchant AI bargain on price/volume directly.
