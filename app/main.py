@@ -268,7 +268,7 @@ def _execute_single_restock(
             items=cart_items,
             accept_upsell=False,
             buyer_confirmed_high_value=True,
-            with_auditor=bool(groq_api_key),
+            with_auditor=bool(groq_key),
             customer_goal=goal,
             groq_api_key=groq_key,
             gemini_api_key=gemini_key,

@@ -10,7 +10,7 @@ This module handles:
 import sqlite3
 import os
 import json
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Set, Tuple
 from datetime import datetime
 
 # Database path
@@ -177,6 +177,7 @@ def reset_inventory(company: Optional[str] = None):
     
     if target_comp:
         cursor.execute("DELETE FROM inventory WHERE company = ?", (target_comp,))
+        cursor.execute("DELETE FROM restock_orders WHERE company = ? AND status = 'pending'", (target_comp,))
         comp_seeds = [s for s in ALL_SEED_DATA if s[4] == target_comp]
         for sku, name, qty, threshold, comp in comp_seeds:
             cursor.execute(
@@ -185,6 +186,7 @@ def reset_inventory(company: Optional[str] = None):
             )
     else:
         cursor.execute("DELETE FROM inventory")
+        cursor.execute("DELETE FROM restock_orders WHERE status = 'pending'")
         for sku, name, qty, threshold, comp in ALL_SEED_DATA:
             cursor.execute(
                 "INSERT INTO inventory (sku, name, quantity, reorder_threshold, company) VALUES (?, ?, ?, ?, ?)",
@@ -368,22 +370,108 @@ def get_items_below_threshold(company: Optional[str] = None) -> List[Dict]:
     return items
 
 
-def update_stock(sku: str, quantity_change: int) -> bool:
+def update_stock(sku: str, quantity_change: int, company: Optional[str] = None) -> bool:
     """Update stock level for a SKU (positive to add, negative to remove)."""
     conn = _get_connection()
     cursor = conn.cursor()
+    target_comp = _normalize_company(company)
     
     try:
-        cursor.execute(
-            "UPDATE inventory SET quantity = quantity + ?, last_updated = CURRENT_TIMESTAMP WHERE sku = ?",
-            (quantity_change, sku)
-        )
+        if target_comp:
+            cursor.execute(
+                "UPDATE inventory SET quantity = quantity + ?, last_updated = CURRENT_TIMESTAMP WHERE sku = ? AND company = ?",
+                (quantity_change, sku, target_comp)
+            )
+        else:
+            cursor.execute(
+                "UPDATE inventory SET quantity = quantity + ?, last_updated = CURRENT_TIMESTAMP WHERE sku = ?",
+                (quantity_change, sku)
+            )
         conn.commit()
         success = cursor.rowcount > 0
         conn.close()
         return success
     except Exception as e:
         conn.rollback()
+        conn.close()
+        return False
+
+
+# In-memory in-flight restock tracking: set of (company, sku)
+_INFLIGHT_RESTOCKS: Set[Tuple[str, str]] = set()
+
+
+def acquire_restock_lock(sku: str, company: Optional[str] = None) -> bool:
+    """Acquire an in-memory lock for a SKU to prevent duplicate concurrent restock orders."""
+    target_comp = _normalize_company(company) or DEFAULT_COMPANY
+    key = (target_comp, sku)
+    if key in _INFLIGHT_RESTOCKS:
+        return False
+    _INFLIGHT_RESTOCKS.add(key)
+    return True
+
+
+def release_restock_lock(sku: str, company: Optional[str] = None):
+    """Release an in-memory lock for a SKU."""
+    target_comp = _normalize_company(company) or DEFAULT_COMPANY
+    key = (target_comp, sku)
+    _INFLIGHT_RESTOCKS.discard(key)
+
+
+def has_pending_or_recent_restock(sku: str, company: Optional[str] = None, cooldown_seconds: int = 60) -> bool:
+    """
+    Check if a SKU in a given company already has:
+    1. A restock order currently in-flight in memory, OR
+    2. A pending restock order awaiting approval, OR
+    3. A restock order placed within the last cooldown_seconds.
+    Prevents duplicate restock triggers.
+    """
+    target_comp = _normalize_company(company) or DEFAULT_COMPANY
+    
+    # 1. Check in-flight memory lock
+    if (target_comp, sku) in _INFLIGHT_RESTOCKS:
+        return True
+
+    conn = _get_connection()
+    cursor = conn.cursor()
+    
+    try:
+        # 2. Check pending orders created in the last 1 hour for this company
+        cursor.execute(
+            """SELECT items FROM restock_orders 
+               WHERE company = ? AND status = 'pending'
+               AND (strftime('%s', 'now') - strftime('%s', order_date)) < 3600""",
+            (target_comp,)
+        )
+        for row in cursor.fetchall():
+            try:
+                items = json.loads(row["items"]) if isinstance(row["items"], str) else row["items"]
+                if any(it.get("product_id") == sku or it.get("sku") == sku for it in items):
+                    conn.close()
+                    return True
+            except Exception:
+                pass
+
+        # 3. Check orders created in the last cooldown_seconds
+        cursor.execute(
+            """SELECT items FROM restock_orders 
+               WHERE company = ? 
+               AND (strftime('%s', 'now') - strftime('%s', order_date)) < ?
+               ORDER BY id DESC LIMIT 50""",
+            (target_comp, cooldown_seconds)
+        )
+        for row in cursor.fetchall():
+            try:
+                items = json.loads(row["items"]) if isinstance(row["items"], str) else row["items"]
+                if any(it.get("product_id") == sku or it.get("sku") == sku for it in items):
+                    conn.close()
+                    return True
+            except Exception:
+                pass
+                
+        conn.close()
+        return False
+    except Exception:
         conn.close()
         return False
 
@@ -506,24 +594,8 @@ def update_restock_order_status(order_id: int, status: str,
 
 
 def approve_restock_order(order_id: int) -> bool:
-    """Approve a pending restock order."""
-    conn = _get_connection()
-    cursor = conn.cursor()
-    
-    try:
-        cursor.execute(
-            """UPDATE restock_orders 
-               SET status = 'approved', human_approval_date = CURRENT_TIMESTAMP
-               WHERE id = ? AND status = 'pending'"""
-        )
-        conn.commit()
-        success = cursor.rowcount > 0
-        conn.close()
-        return success
-    except Exception as e:
-        conn.rollback()
-        conn.close()
-        return False
+    """Approve a pending restock order and immediately update inventory."""
+    return complete_restock_order(order_id)
 
 
 def complete_restock_order(order_id: int, razorpay_order_id: str = None) -> bool:
@@ -532,30 +604,33 @@ def complete_restock_order(order_id: int, razorpay_order_id: str = None) -> bool
     cursor = conn.cursor()
     
     try:
-        cursor.execute("SELECT items, status FROM restock_orders WHERE id = ?", (order_id,))
+        cursor.execute("SELECT items, status, company FROM restock_orders WHERE id = ?", (order_id,))
         row = cursor.fetchone()
         
         if not row or row["status"] not in ["approved", "pending"]:
             conn.close()
             return False
         
-        items = json.loads(row["items"])
+        items = json.loads(row["items"]) if isinstance(row["items"], str) else row["items"]
+        comp = row["company"] or DEFAULT_COMPANY
         for item in items:
             sku = item.get("sku") or item.get("product_id")
             qty = item.get("qty", 1)
             if sku:
-                update_stock(sku, qty)
+                update_stock(sku, qty, company=comp)
         
         if razorpay_order_id:
             cursor.execute(
                 """UPDATE restock_orders 
-                   SET status = 'completed', razorpay_order_id = ?
+                   SET status = 'completed', razorpay_order_id = ?, human_approval_date = CURRENT_TIMESTAMP
                    WHERE id = ?""",
                 (razorpay_order_id, order_id)
             )
         else:
             cursor.execute(
-                "UPDATE restock_orders SET status = 'completed' WHERE id = ?",
+                """UPDATE restock_orders 
+                   SET status = 'completed', human_approval_date = CURRENT_TIMESTAMP 
+                   WHERE id = ?""",
                 (order_id,)
             )
         

@@ -37,12 +37,11 @@ RAZORPAY_WEBHOOK_SECRET = os.getenv("RAZORPAY_WEBHOOK_SECRET", "")
 # Razorpay's own documented per-transaction ceiling for standard test/live
 # checkout is far higher than this; we deliberately set a *tighter* merchant
 # policy ceiling so the agent's own gate -- not the gateway's -- is what
-# normally stops runaway carts. The one SKU priced above this in catalog.json
-# exists to demonstrate the gateway-level failure path too.
-MAX_SINGLE_ORDER_PAISE = 1_000_000          # INR 10,000 per order
-MAX_SESSION_SPEND_PAISE = 2_000_000         # INR 20,000 total per buyer session
-HUMAN_CONFIRM_ABOVE_PAISE = 500_000         # INR 5,000+ needs explicit buyer confirmation
-MAX_LINE_QTY = 20                           # no single line item over this qty
+# normally stops runaway carts.
+MAX_SINGLE_ORDER_PAISE = 5_000_000          # INR 50,000 per order (realistic for 14k-25k normal restock orders)
+MAX_SESSION_SPEND_PAISE = 10_000_000        # INR 100,000 total per buyer session
+HUMAN_CONFIRM_ABOVE_PAISE = 2_500_000       # INR 25,000+ needs explicit buyer confirmation
+MAX_LINE_QTY = 50                           # Allow realistic B2B batch restocking up to 50 units
 
 ALLOWED_CATEGORIES = {
     "roofing", "tiles", "accessory", "service",
@@ -51,7 +50,7 @@ ALLOWED_CATEGORIES = {
 
 # Simulated gateway ceiling used only by the mock client, to mirror the fact
 # that real payment gateways reject absurdly large single transactions.
-MOCK_GATEWAY_CEILING_PAISE = 5_000_000      # INR 50,000
+MOCK_GATEWAY_CEILING_PAISE = 20_000_000     # INR 200,000
 
 AUDIT_LOG_PATH = os.getenv("AUDIT_LOG_PATH", os.path.join(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data", "audit_log.jsonl"
@@ -60,4 +59,4 @@ AUDIT_LOG_PATH = os.getenv("AUDIT_LOG_PATH", os.path.join(
 # --- AI Buyer Model Configuration ---
 # Model to use for AI buyer agent (Gemini API)
 # Default to a stable Flash-tier model that's fast and cost-effective
-GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.5-flash")
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")

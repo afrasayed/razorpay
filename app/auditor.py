@@ -129,7 +129,7 @@ Review this decision and flag anything suspicious that might warrant human revie
                 {"role": "user", "content": user_message}
             ],
             temperature=0.3,
-            max_tokens=300,
+            max_tokens=600,
         )
         
         audit_response = response.choices[0].message.content.strip()
@@ -142,7 +142,20 @@ Review this decision and flag anything suspicious that might warrant human revie
                 cleaned = cleaned[4:]
         cleaned = cleaned.strip()
         
-        result = json.loads(cleaned)
+        try:
+            result = json.loads(cleaned)
+        except json.JSONDecodeError as json_err:
+            # If Groq specifically outputted flagged_for_review, strictly preserve the safety flag
+            if '"flagged_for_review"' in cleaned or 'flagged_for_review' in cleaned:
+                import re
+                reason_match = re.search(r'"reasoning":\s*"([^"\\]*(?:\\.[^"\\]*)*)"?', cleaned)
+                reason_text = reason_match.group(1) if reason_match else "Order flagged for review by independent safety auditor."
+                return {
+                    "risk_flag": "flagged_for_review",
+                    "reasoning": reason_text,
+                    "model_used": used_model
+                }
+            raise json_err
         
         # Validate structure
         if "risk_flag" not in result or "reasoning" not in result:
@@ -151,7 +164,7 @@ Review this decision and flag anything suspicious that might warrant human revie
         if result["risk_flag"] not in ["clean", "flagged_for_review"]:
             raise AuditorError(f"Invalid risk_flag value: {result['risk_flag']}")
         
-        result["model_used"] = model_name
+        result["model_used"] = used_model
         return result
         
     except json.JSONDecodeError as e:
@@ -267,7 +280,7 @@ def generate_customer_order(
 
     api_key = groq_api_key or os.getenv("GROQ_API_KEY")
     model_name = os.getenv("GROQ_AUDITOR_MODEL", DEFAULT_GROQ_MODEL)
-    
+
     if not api_key:
         import logging
         logging.getLogger("customer_agent").info(

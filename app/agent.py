@@ -64,8 +64,24 @@ Choose appropriate products and quantities to fulfill this goal."""
             # Create the model and generate content
             # Allow environment variable override
             model_name = os.getenv("GEMINI_MODEL", config.GEMINI_MODEL)
-            model = genai.GenerativeModel(model_name, system_instruction=system_prompt)
-            response = model.generate_content(user_message)
+            try:
+                model = genai.GenerativeModel(model_name, system_instruction=system_prompt)
+                response = model.generate_content(user_message)
+            except Exception as model_err:
+                fallback_models = ["gemini-flash-latest", "gemini-3.6-flash", "gemini-2.0-flash", "gemini-1.5-flash", "gemini-1.5-pro"]
+                response = None
+                for fm in fallback_models:
+                    if fm != model_name:
+                        try:
+                            model = genai.GenerativeModel(fm, system_instruction=system_prompt)
+                            response = model.generate_content(user_message)
+                            model_name = fm
+                            break
+                        except Exception:
+                            continue
+                if not response:
+                    raise model_err
+
             llm_response = response.text
             
             # Clean up response if it has markdown code blocks
@@ -285,12 +301,18 @@ class CheckoutAgent:
                                 f"Risk assessment: {audit_result['risk_flag']}",
                 )
             except Exception as e:
-                # Auditor failure should not block checkout - log and continue
+                # Auditor failure should not block checkout - record explicit error status so UI never misidentifies as clean
+                audit_result = {
+                    "risk_flag": "error",
+                    "reasoning": f"Independent LLM auditor unavailable: {str(e)}",
+                    "model_used": "groq-unavailable",
+                    "error": str(e)
+                }
                 self.audit.log(
                     session_id, "llm_audit_review",
                     summary=f"Auditor call failed: {str(e)}",
                     outcome="failure",
-                    explanation="Independent LLM auditor failed but checkout continues.",
+                    explanation=f"Independent LLM auditor call failed: {str(e)}. Checkout proceeded per safety fallback.",
                 )
 
         # 4.5. Hold order if auditor flagged it for review
@@ -320,7 +342,7 @@ class CheckoutAgent:
                 session_id, False,
                 f"This order totals INR {order_total/100:.2f}, above the INR {config.HUMAN_CONFIRM_ABOVE_PAISE/100:.2f} "
                 "auto-approval line. Please confirm explicitly to proceed -- no charge has been made.",
-                cart=cart, order=None, needs_confirmation=True, ai_mode=ai_mode, ai_error=ai_error,
+                cart=cart, order=None, needs_confirmation=True, audit_result=audit_result, ai_mode=ai_mode, ai_error=ai_error,
             )
 
         # 6. Razorpay call, explicit failure handling
