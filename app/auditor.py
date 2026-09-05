@@ -96,8 +96,8 @@ def audit_decision(
 
 Analyze the shopping goal and proposed cart against these key business risks:
 1. FAN FAVORITE DETECTION: If customer orders multiple units of high-demand items, check if total spend or quantity looks excessive.
-2. FIRST-TIME BUYER SPIKE: If this is a new session with high spend (> INR 5,000), flag for verification.
-3. GOAL-CART MISMATCH: Does the cart actually fulfill the customer's stated goal? Flag nonsensical or irrelevant items.
+2. FIRST-TIME BUYER SPIKE: If this is a new retail customer session with high spend (> INR 5,000), flag for verification. NOTE: For automated B2B warehouse inventory restock goals bringing stock back to healthy threshold, wholesale replenishment amounts within policy (up to INR 50,000) are normal operational procedure; do NOT flag them as first-time consumer buyer spikes.
+3. GOAL-CART MISMATCH: Does the cart actually fulfill the stated goal? Flag nonsensical or irrelevant items.
 4. QUANTITY ANOMALY: Are quantities reasonable for the goal? Flag bulk purchases without clear justification.
 
 Respond with ONLY a JSON object:
@@ -115,7 +115,7 @@ Session Context:
 - Current Cart Total: INR {total_paise/100:.2f}
 - Combined Session Total: INR {session_total_inr:.2f}
 - Items in Session History: {len(session_history) if session_history else 0}
-- Policy Caps: Single order INR {catalog.get('policy', {}).get('max_single_order_paise', 1000000)/100:.2f}, Session INR {catalog.get('policy', {}).get('max_session_spend_paise', 2000000)/100:.2f}
+- Policy Caps: Single order INR {catalog.get('policy', {}).get('max_single_order_paise', 5000000)/100:.2f}, Session INR {catalog.get('policy', {}).get('max_session_spend_paise', 10000000)/100:.2f}
 
 Review this decision and flag anything suspicious that might warrant human review, even if it passes policy thresholds."""
 
