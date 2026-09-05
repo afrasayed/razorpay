@@ -217,30 +217,37 @@
   .collapsible.open .collapsible-header { border-bottom:1px solid var(--line); }
   pre { margin:0; padding:14px; font-size:11px; overflow:auto; background:var(--bg-dark); color:var(--ink-dark); }
   
-  /* Auto-simulation Control Panel */
+  /* Auto-simulation Control Panel (Compact Secondary Control) */
   .sim-control-panel {
-    background: linear-gradient(135deg, #eff6ff 0%, #e0e7ff 100%);
-    border: 1.5px solid #bfdbfe;
-    border-radius: 12px;
-    padding: 14px 16px;
-    margin-bottom: 20px;
+    background: #f8fafc;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 8px 12px;
+    margin-bottom: 14px;
     display: flex;
     align-items: center;
     justify-content: space-between;
     flex-wrap: wrap;
-    gap: 12px;
-  }
-  .sim-title {
-    font-weight: 700;
-    font-size: 14px;
-    color: #1e3a8a;
-    display: flex;
-    align-items: center;
     gap: 8px;
   }
+  .sim-info {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+  .sim-title {
+    font-weight: 600;
+    font-size: 11.5px;
+    color: var(--dim);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
   .sim-dot {
-    width: 10px;
-    height: 10px;
+    width: 7px;
+    height: 7px;
     border-radius: 50%;
     background: #94a3b8;
     display: inline-block;
@@ -248,34 +255,34 @@
   }
   .sim-dot.active {
     background: #10b981;
-    box-shadow: 0 0 10px #10b981;
+    box-shadow: 0 0 8px #10b981;
     animation: pulse-dot 1.5s infinite;
   }
   @keyframes pulse-dot {
     0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
-    70% { transform: scale(1.1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+    70% { transform: scale(1.1); box-shadow: 0 0 0 5px rgba(16, 185, 129, 0); }
     100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
   }
   .sim-counter {
-    font-size: 12.5px;
+    font-size: 11px;
     font-weight: 600;
-    color: #1e40af;
-    margin-top: 4px;
+    color: var(--ink);
+    margin-top: 1px;
     font-family: monospace;
   }
   .sim-btn {
     background: #2563eb;
     color: white;
     border: none;
-    border-radius: 8px;
-    padding: 9px 18px;
-    font-size: 13px;
-    font-weight: 700;
+    border-radius: 6px;
+    padding: 5px 11px;
+    font-size: 11.5px;
+    font-weight: 600;
     cursor: pointer;
     transition: all 0.2s ease;
-    display: flex;
+    display: inline-flex;
     align-items: center;
-    gap: 6px;
+    gap: 5px;
   }
   .sim-btn:hover {
     background: #1d4ed8;
@@ -348,6 +355,284 @@
     white-space: nowrap;
     margin-left: 12px;
   }
+
+  /* Command Centre View */
+  .wrap.command-mode {
+    grid-template-columns: 1fr !important;
+  }
+  .wrap.command-mode > .panel:nth-child(2) {
+    display: none !important;
+  }
+  .wrap.command-mode > .panel:first-child {
+    max-width: 100% !important;
+    padding: 20px 32px !important;
+  }
+
+  .cmd-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+    border: 1.5px solid #bfdbfe;
+    border-radius: 12px;
+    padding: 12px 18px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.08);
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .cmd-toolbar-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 15px;
+    font-weight: 700;
+    color: #1e3a8a;
+  }
+  .cmd-toolbar-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .cmd-split-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 22px;
+    height: calc(100vh - 225px);
+    min-height: 520px;
+  }
+
+  .cmd-panel {
+    display: flex;
+    flex-direction: column;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+  }
+
+  .cmd-panel-header {
+    padding: 14px 18px;
+    background: #ffffff;
+    border-bottom: 1.5px solid var(--line);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+  }
+  .cmd-panel-title {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--ink);
+  }
+  .cmd-panel-badge {
+    background: #e2e8f0;
+    color: #334155;
+    padding: 3px 9px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  .cmd-panel-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    scroll-behavior: smooth;
+    background: #fafbfc;
+  }
+
+  /* Order Cards */
+  .cmd-card {
+    background: #ffffff;
+    border: 1px solid var(--line);
+    border-left: 5px solid var(--line);
+    border-radius: 10px;
+    padding: 14px 16px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .cmd-card:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+  }
+
+  /* Color-coding by status */
+  .cmd-card.status-success {
+    border-left-color: var(--ok);
+  }
+  .cmd-card.status-pending {
+    border-left-color: var(--warn);
+    background: linear-gradient(to right, rgba(245, 158, 11, 0.03), #ffffff);
+  }
+  .cmd-card.status-rejected {
+    border-left-color: var(--bad);
+    background: linear-gradient(to right, rgba(239, 68, 68, 0.03), #ffffff);
+  }
+
+  .cmd-card-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .cmd-badge-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .badge-id {
+    font-size: 12px;
+    font-weight: 700;
+    color: #1e3a8a;
+    background: #e0e7ff;
+    padding: 2px 7px;
+    border-radius: 6px;
+  }
+  .badge-comp {
+    font-size: 11px;
+    font-weight: 600;
+    background: #f1f5f9;
+    color: #475569;
+    padding: 2px 7px;
+    border-radius: 6px;
+    border: 1px solid #e2e8f0;
+  }
+  .badge-source {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 12px;
+  }
+  .badge-source.ai {
+    background: #ede9fe;
+    color: #6d28d9;
+    border: 1px solid #ddd6fe;
+  }
+  .badge-source.sim {
+    background: #e0f2fe;
+    color: #0369a1;
+    border: 1px solid #bae6fd;
+  }
+  .badge-source.manual {
+    background: #f1f5f9;
+    color: #334155;
+    border: 1px solid #e2e8f0;
+  }
+
+  .badge-mode {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 12px;
+  }
+  .badge-mode.live {
+    background: #dcfce7;
+    color: #15803d;
+    border: 1px solid #bbf7d0;
+  }
+  .badge-mode.mock {
+    background: #fef3c7;
+    color: #b45309;
+    border: 1px solid #fde68a;
+  }
+
+  .cmd-card-date {
+    font-size: 11.5px;
+    color: var(--dim);
+    white-space: nowrap;
+  }
+
+  .cmd-card-main {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .cmd-item-list {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+  .cmd-item-line {
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--ink);
+  }
+  .cmd-item-qty {
+    display: inline-block;
+    background: #e2e8f0;
+    color: #1e293b;
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-size: 11.5px;
+    margin-right: 5px;
+  }
+  .cmd-price-total {
+    font-size: 14px;
+    font-weight: 700;
+    color: #1e3a8a;
+    white-space: nowrap;
+  }
+
+  .cmd-reason-box {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-left: 3px solid #6366f1;
+    border-radius: 6px;
+    padding: 8px 12px;
+    font-size: 12.5px;
+    color: #334155;
+    line-height: 1.4;
+  }
+  .cmd-reason-box.trigger {
+    border-left-color: #f59e0b;
+    background: #fffbeb;
+    color: #92400e;
+  }
+
+  .cmd-card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid #f1f5f9;
+    padding-top: 8px;
+    font-size: 12px;
+  }
+  .cmd-status-tag {
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .cmd-status-tag.success { color: var(--ok); }
+  .cmd-status-tag.pending { color: var(--warn); }
+  .cmd-status-tag.rejected { color: var(--bad); }
+
+  .cmd-empty-state {
+    padding: 32px 16px;
+    text-align: center;
+    color: var(--dim);
+    font-size: 13.5px;
+  }
 </style>
 </head>
 <body>
@@ -381,10 +666,65 @@
 <div class="wrap">
   <div class="panel">
     <div class="tabs">
+      <button class="tab" id="tabBtn-command" onclick="switchTab('command')">🎛️ Command Centre</button>
       <button class="tab active" id="tabBtn-customer" onclick="switchTab('customer')">🛒 Customer Orders</button>
       <button class="tab" id="tabBtn-restock" onclick="switchTab('restock')">🤖 AI Restock</button>
       <button class="tab" id="tabBtn-inventory" onclick="switchTab('inventory')">📦 Inventory</button>
       <button class="tab" id="tabBtn-buyer" onclick="switchTab('buyer')">⚡ AI Buyer Checkout</button>
+    </div>
+    
+    <!-- 0. Command Centre Tab -->
+    <div id="commandTab" class="tab-content">
+      <!-- Toolbar -->
+      <div class="cmd-toolbar">
+        <div class="cmd-toolbar-title">
+          <span>🎛️ Multi-Brand Command Feed</span>
+          <span class="badge" id="cmdCompanyBadge" style="background:#2563eb; color:white; font-size:12px;">Afra Infra</span>
+          <span id="cmdToolbarStats" style="font-size:12.5px; font-weight:500; color:#1e40af;">Real-time split view</span>
+        </div>
+        <div class="cmd-toolbar-actions">
+          <button class="sim-btn" style="background:var(--accent); color:#fff; border-color:var(--accent); font-size:12px; padding:6px 12px;" onclick="runSimulatedStep()" title="Trigger a single AI Customer Agent order">
+            ⚡ AI Customer Order
+          </button>
+          <button class="sim-btn" style="background:#059669; color:#fff; border-color:#059669; font-size:12px; padding:6px 12px;" onclick="triggerAutoRestock()" title="Trigger Gemini AI restock check">
+            🚀 Run AI Restock
+          </button>
+          <button class="secondary small" onclick="loadCommandOrders()" title="Refresh both feeds">
+            🔄 Refresh Both
+          </button>
+        </div>
+      </div>
+
+      <!-- Split Layout -->
+      <div class="cmd-split-layout">
+        <!-- LEFT: Customer Orders Panel -->
+        <div class="cmd-panel customer-panel">
+          <div class="cmd-panel-header">
+            <h3 class="cmd-panel-title">
+              <span>🛒</span>
+              <span id="cmdCustomerHeader">Customer Orders (0)</span>
+            </h3>
+            <span class="cmd-panel-badge">Inward Demand</span>
+          </div>
+          <div class="cmd-panel-body" id="cmdCustomerOrdersList">
+            <div class="cmd-empty-state">Loading customer orders...</div>
+          </div>
+        </div>
+
+        <!-- RIGHT: Merchant Restock Orders Panel -->
+        <div class="cmd-panel merchant-panel">
+          <div class="cmd-panel-header">
+            <h3 class="cmd-panel-title">
+              <span>🏭</span>
+              <span id="cmdMerchantHeader">Merchant Orders (0)</span>
+            </h3>
+            <span class="cmd-panel-badge">Autonomous Restock</span>
+          </div>
+          <div class="cmd-panel-body" id="cmdMerchantOrdersList">
+            <div class="cmd-empty-state">Loading merchant restock orders...</div>
+          </div>
+        </div>
+      </div>
     </div>
     
     <!-- 1. Customer Order Tab -->
@@ -404,7 +744,7 @@
           <button id="simToggleBtn" class="sim-btn" onclick="toggleSimulation()">
             ▶ Start Simulation
           </button>
-          <button id="simSingleBtn" class="sim-btn" style="background:var(--accent); color:#fff; border-color:var(--accent); margin-left:8px;" onclick="runSimulatedStep()" title="Trigger a single AI Customer Agent order">
+          <button id="simSingleBtn" class="sim-btn" style="background:var(--accent); color:#fff; border-color:var(--accent); margin-left:5px;" onclick="runSimulatedStep()" title="Trigger a single AI Customer Agent order">
             ⚡ AI Customer Order
           </button>
         </div>
@@ -592,6 +932,7 @@ document.addEventListener('DOMContentLoaded', function() {
   // Default to customer orders tab setup with active company
   switchTab('customer');
   loadAudit();
+  loadCommandOrders();
 });
 
 /* =========================================================================
@@ -653,13 +994,18 @@ async function onCompanyChange(company) {
   loadRestockOrders();
   loadCatalog();
   loadAudit();
+  loadCommandOrders();
 }
 
 /* =========================================================================
    Tab Switching Logic
    ========================================================================= */
 function switchTab(tabName) {
-  const tabs = ['customer', 'restock', 'inventory', 'buyer'];
+  const tabs = ['command', 'customer', 'restock', 'inventory', 'buyer'];
+  const wrapEl = document.querySelector('.wrap');
+  if (wrapEl) {
+    wrapEl.classList.toggle('command-mode', tabName === 'command');
+  }
   tabs.forEach(t => {
     const btn = document.getElementById(`tabBtn-${t}`);
     const content = document.getElementById(`${t}Tab`);
@@ -668,7 +1014,9 @@ function switchTab(tabName) {
   });
   
   // Tab-specific lazy data loading
-  if (tabName === 'customer') {
+  if (tabName === 'command') {
+    loadCommandOrders();
+  } else if (tabName === 'customer') {
     ensureCatalogLoaded(activeCompany).then((cat) => {
       const container = document.getElementById('customerOrderItems');
       if (container && container.children.length === 0 && cat && cat.products && cat.products.length > 0) {
@@ -683,6 +1031,211 @@ function switchTab(tabName) {
     loadInventory();
   } else if (tabName === 'buyer') {
     loadCatalog();
+  }
+}
+
+/* =========================================================================
+   Command Centre Real-Time Feed Logic
+   ========================================================================= */
+async function loadCommandOrders() {
+  const custContainer = document.getElementById('cmdCustomerOrdersList');
+  const merchContainer = document.getElementById('cmdMerchantOrdersList');
+  const custHeader = document.getElementById('cmdCustomerHeader');
+  const merchHeader = document.getElementById('cmdMerchantHeader');
+  const companyBadge = document.getElementById('cmdCompanyBadge');
+  const toolbarStats = document.getElementById('cmdToolbarStats');
+
+  if (companyBadge) companyBadge.textContent = activeCompany;
+
+  try {
+    const [custRes, merchRes] = await Promise.all([
+      fetch(`/customer-orders?limit=50&company=${encodeURIComponent(activeCompany)}`),
+      fetch(`/restock-orders?limit=50&company=${encodeURIComponent(activeCompany)}`)
+    ]);
+
+    const [custOrders, merchOrders] = await Promise.all([
+      custRes.json(),
+      merchRes.json()
+    ]);
+
+    const cCount = Array.isArray(custOrders) ? custOrders.length : 0;
+    const mCount = Array.isArray(merchOrders) ? merchOrders.length : 0;
+
+    if (custHeader) custHeader.textContent = `Customer Orders (${cCount})`;
+    if (merchHeader) merchHeader.textContent = `Merchant Orders (${mCount})`;
+    if (toolbarStats) toolbarStats.textContent = `${cCount} customer orders | ${mCount} restock orders for ${activeCompany}`;
+
+    // 1. Render Customer Orders (Left Panel)
+    if (custContainer) {
+      if (!cCount) {
+        custContainer.innerHTML = `
+          <div class="cmd-empty-state">
+            <div style="font-size:28px; margin-bottom:8px;">🛒</div>
+            <strong>No customer orders yet for ${activeCompany}</strong>
+            <p style="margin:6px 0 12px; font-size:12.5px;">Click below to simulate or place an order for this merchant.</p>
+            <button class="secondary small" onclick="runSimulatedStep()">⚡ Generate AI Order</button>
+          </div>
+        `;
+      } else {
+        custContainer.innerHTML = custOrders.map(o => {
+          let items = [];
+          try { items = typeof o.items === 'string' ? JSON.parse(o.items) : o.items; } catch (e) {}
+          if (!Array.isArray(items)) items = [];
+          const totalInr = (o.total_paise / 100).toFixed(2);
+          const dateStr = o.order_date ? new Date(o.order_date.replace(' ', 'T')).toLocaleString() : 'Recent';
+
+          // Determine Order Source & Badge
+          let sourceHtml = '<span class="badge-source manual">👤 Manual</span>';
+          const notes = (o.notes || '').trim();
+          const isAi = notes && !notes.toLowerCase().startsWith('manual') && !notes.toLowerCase().startsWith('test order') && notes.length > 5;
+          const isSim = notes.includes('Simulation') || notes.includes('Simulated') || o.is_simulated;
+
+          if (isSim) {
+            sourceHtml = '<span class="badge-source sim">🤖 Simulation</span>';
+          } else if (isAi) {
+            sourceHtml = '<span class="badge-source ai">🧠 AI Customer Agent</span>';
+          }
+
+          const hasRationale = isAi && notes;
+
+          return `
+            <div class="cmd-card status-success">
+              <div class="cmd-card-top">
+                <div class="cmd-badge-group">
+                  <span class="badge-id">Order #${o.id}</span>
+                  <span class="badge-comp">${o.company || activeCompany}</span>
+                  ${sourceHtml}
+                </div>
+                <span class="cmd-card-date">${dateStr}</span>
+              </div>
+
+              <div class="cmd-card-main">
+                <div class="cmd-item-list">
+                  ${items.map(it => `
+                    <div class="cmd-item-line">
+                      <span class="cmd-item-qty">${it.qty}x</span>
+                      <span>${it.name || it.sku}</span>
+                    </div>
+                  `).join('')}
+                </div>
+                <div class="cmd-price-total">INR ${totalInr}</div>
+              </div>
+
+              ${hasRationale ? `
+                <div class="cmd-reason-box">
+                  <span style="font-weight:600; color:#4f46e5; margin-right:4px;">💬 Rationale:</span>
+                  <span>"${notes}"</span>
+                </div>
+              ` : ''}
+
+              <div class="cmd-card-footer">
+                <span class="cmd-status-tag success">✓ Processed &amp; Stock Depleted</span>
+                <span style="font-size:11px; color:var(--dim);">${items.reduce((s, i) => s + (i.qty || 0), 0)} unit(s)</span>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+    }
+
+    // 2. Render Merchant Orders (Right Panel)
+    if (merchContainer) {
+      if (!mCount) {
+        merchContainer.innerHTML = `
+          <div class="cmd-empty-state">
+            <div style="font-size:28px; margin-bottom:8px;">🏭</div>
+            <strong>No merchant restock orders for ${activeCompany}</strong>
+            <p style="margin:6px 0 12px; font-size:12.5px;">All items are above reorder thresholds or no auto-restock triggered yet.</p>
+            <button class="secondary small" onclick="triggerAutoRestock()">🚀 Run Restock Check</button>
+          </div>
+        `;
+      } else {
+        merchContainer.innerHTML = merchOrders.map(o => {
+          let items = [];
+          try { items = typeof o.items === 'string' ? JSON.parse(o.items) : o.items; } catch (e) {}
+          if (!Array.isArray(items)) items = [];
+          const totalInr = (o.total_paise / 100).toFixed(2);
+          const dateStr = o.order_date ? new Date(o.order_date.replace(' ', 'T')).toLocaleString() : 'Recent';
+
+          // AI Mode
+          const ctx = o.ai_decision_context || '';
+          const isLiveGemini = ctx.toLowerCase().includes('mode: gemini') || ctx.toLowerCase().includes('gemini live');
+          const modeBadge = isLiveGemini
+            ? '<span class="badge-mode live">⚡ Gemini Live</span>'
+            : '<span class="badge-mode mock">🧩 Deterministic Mock</span>';
+
+          // Status & Card Border
+          let statusClass = 'status-success';
+          let statusHtml = '<span class="cmd-status-tag success">✓ Completed &amp; Stock Updated</span>';
+          if (o.status === 'pending') {
+            statusClass = 'status-pending';
+            statusHtml = '<span class="cmd-status-tag pending">⏳ Held by Auditor (Needs Approval)</span>';
+          } else if (o.status === 'rejected') {
+            statusClass = 'status-rejected';
+            statusHtml = '<span class="cmd-status-tag rejected">✗ Blocked by Policy</span>';
+          }
+
+          // Trigger Reason extraction
+          let triggerText = ctx || 'Autonomous threshold evaluation';
+          if (ctx.includes('Triggered by') || ctx.includes('depletion')) {
+            triggerText = 'Trigger: Stock fell below threshold due to customer order';
+          } else if (ctx.includes('goal:')) {
+            const goalMatch = ctx.match(/goal:\s*([^.]+)/i);
+            if (goalMatch) triggerText = `Trigger: ${goalMatch[1].trim()}`;
+          }
+
+          return `
+            <div class="cmd-card ${statusClass}">
+              <div class="cmd-card-top">
+                <div class="cmd-badge-group">
+                  <span class="badge-id">Restock #${o.id}</span>
+                  <span class="badge-comp">${o.company || activeCompany}</span>
+                  ${modeBadge}
+                </div>
+                <span class="cmd-card-date">${dateStr}</span>
+              </div>
+
+              <div class="cmd-card-main">
+                <div class="cmd-item-list">
+                  ${items.map(it => `
+                    <div class="cmd-item-line">
+                      <span class="cmd-item-qty">${it.qty}x</span>
+                      <span>${it.name || it.product_id || it.sku}</span>
+                    </div>
+                  `).join('')}
+                </div>
+                <div class="cmd-price-total">INR ${totalInr}</div>
+              </div>
+
+              <div class="cmd-reason-box trigger">
+                <span style="font-weight:600; color:#b45309; margin-right:4px;">🎯 Policy Trigger:</span>
+                <span>${triggerText}</span>
+              </div>
+
+              ${o.auditor_reasoning ? `
+                <div style="font-size:12px; color:#b45309; background:#fffbeb; padding:6px 10px; border-radius:6px; border:1px solid #fef3c7;">
+                  <strong>Auditor Review:</strong> ${o.auditor_reasoning}
+                </div>
+              ` : ''}
+
+              <div class="cmd-card-footer">
+                ${statusHtml}
+                ${o.status === 'pending' ? `
+                  <div style="display:flex; gap:6px;">
+                    <button class="success-btn small" style="padding:3px 8px; font-size:11px;" onclick="handleRestockAction(${o.id}, 'approve')">✓ Approve</button>
+                    <button class="danger-btn small" style="padding:3px 8px; font-size:11px;" onclick="handleRestockAction(${o.id}, 'reject')">✕ Reject</button>
+                  </div>
+                ` : `<span style="font-size:11px; color:var(--dim);">${items.reduce((s, i) => s + (i.qty || 0), 0)} unit(s)</span>`}
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+    }
+  } catch (err) {
+    console.error('Error loading Command Centre orders:', err);
+    if (custContainer) custContainer.innerHTML = `<div class="cmd-empty-state" style="color:var(--bad);">Error: ${err.message}</div>`;
+    if (merchContainer) merchContainer.innerHTML = `<div class="cmd-empty-state" style="color:var(--bad);">Error: ${err.message}</div>`;
   }
 }
 
@@ -789,7 +1342,7 @@ function startSimulation() {
   if (dot) {
     dot.classList.add('active');
   }
-  scheduleNextSimulation(600);
+  scheduleNextSimulation(300);
 }
 
 function toggleSimulation() {
@@ -806,7 +1359,7 @@ function scheduleNextSimulation(customDelay = null) {
     clearTimeout(simulationTimer);
     simulationTimer = null;
   }
-  const delay = customDelay !== null ? customDelay : (Math.random() * 3000 + 3000);
+  const delay = customDelay !== null ? customDelay : (Math.random() * 1000 + 1500);
   simulationTimer = setTimeout(async () => {
     if (!simulationActive) return;
     try {
@@ -1175,6 +1728,7 @@ async function processCustomerOrder(customItems = null, customNotes = null, isSi
     loadCustomerOrders();
     loadInventory();
     loadAudit();
+    loadCommandOrders();
   } catch (err) {
     console.error('Failed to process customer order:', err);
     if (!isSimulated) {
@@ -1316,6 +1870,7 @@ async function triggerAutoRestock() {
     loadRestockOrders();
     loadInventory();
     loadAudit();
+    loadCommandOrders();
   } catch (err) {
     alert('Restock trigger error: ' + err.message);
   }
@@ -1406,6 +1961,7 @@ async function handleRestockAction(orderId, action) {
     loadRestockOrders();
     loadInventory();
     loadAudit();
+    loadCommandOrders();
   } catch (err) {
     alert('Action failed: ' + err.message);
   }
