@@ -1,4 +1,41 @@
 {
+  "companies": {
+    "Afra Infra": {
+      "id": "merchant_afra_infra_demo",
+      "name": "Afra Infra Roofing & Tiles",
+      "currency": "INR",
+      "policy_url": "/.well-known/agent-catalog.json",
+      "description": "Roofing sheets, tiles and installation add-ons. Prices are in paise (1 INR = 100 paise), matching Razorpay's smallest-unit convention."
+    },
+    "Tropicana": {
+      "id": "merchant_tropicana_demo",
+      "name": "Tropicana Fruit Beverages",
+      "currency": "INR",
+      "policy_url": "/.well-known/agent-catalog.json",
+      "description": "Premium 100% real fruit juices, blends, and refreshing fruit nectars."
+    },
+    "Amul": {
+      "id": "merchant_amul_demo",
+      "name": "Amul - The Taste of India",
+      "currency": "INR",
+      "policy_url": "/.well-known/agent-catalog.json",
+      "description": "Fresh dairy essentials, milk, butter, ghee, cheese, and artisan chocolates."
+    },
+    "Minimalist": {
+      "id": "merchant_minimalist_demo",
+      "name": "Minimalist Active Skincare",
+      "currency": "INR",
+      "policy_url": "/.well-known/agent-catalog.json",
+      "description": "Science-backed active skincare formulations: serums, sunscreens, and cleansers."
+    },
+    "Nestle": {
+      "id": "merchant_nestle_demo",
+      "name": "Nestle Consumer Foods",
+      "currency": "INR",
+      "policy_url": "/.well-known/agent-catalog.json",
+      "description": "Everyday pantry favourites, coffee, quick meals, and confectionery."
+    }
+  },
   "merchant": {
     "id": "merchant_afra_infra_demo",
     "name": "Afra Infra Roofing & Tiles",
@@ -9,6 +46,7 @@
   "products": [
     {
       "id": "sku_roof_sheet_std",
+      "company": "Afra Infra",
       "name": "Standard Galvanised Roofing Sheet (per unit)",
       "category": "roofing",
       "price_paise": 85000,
@@ -19,6 +57,7 @@
     },
     {
       "id": "sku_roof_sheet_premium",
+      "company": "Afra Infra",
       "name": "Premium Coated Roofing Sheet (per unit)",
       "category": "roofing",
       "price_paise": 145000,
@@ -29,6 +68,7 @@
     },
     {
       "id": "sku_clay_tile",
+      "company": "Afra Infra",
       "name": "Terracotta Clay Roof Tile (per sq. ft. bundle)",
       "category": "tiles",
       "price_paise": 62000,
@@ -39,6 +79,7 @@
     },
     {
       "id": "sku_ridge_cap",
+      "company": "Afra Infra",
       "name": "Ridge Cap Set",
       "category": "accessory",
       "price_paise": 32000,
@@ -49,6 +90,7 @@
     },
     {
       "id": "sku_tile_sealant",
+      "company": "Afra Infra",
       "name": "Tile Sealant (5L)",
       "category": "accessory",
       "price_paise": 18000,
@@ -59,6 +101,7 @@
     },
     {
       "id": "sku_installation_basic",
+      "company": "Afra Infra",
       "name": "Basic Installation Labour (per 100 sq ft)",
       "category": "service",
       "price_paise": 250000,
@@ -69,6 +112,7 @@
     },
     {
       "id": "sku_installation_premium",
+      "company": "Afra Infra",
       "name": "Premium Installation + Site Inspection",
       "category": "service",
       "price_paise": 420000,
@@ -79,12 +123,233 @@
     },
     {
       "id": "sku_industrial_bulk_order",
+      "company": "Afra Infra",
       "name": "Industrial Bulk Sheet Pallet (200 units)",
       "category": "roofing",
       "price_paise": 15500000,
       "currency": "INR",
       "stock": 5,
       "description": "Deliberately large-ticket SKU, used in this demo to trigger the gateway ceiling and show graceful failure handling for oversized single-order amounts.",
+      "upsell_ids": []
+    },
+    {
+      "id": "sku_trop_orange_1l",
+      "company": "Tropicana",
+      "name": "Tropicana 100% Orange Juice (1L)",
+      "category": "beverage",
+      "price_paise": 14500,
+      "currency": "INR",
+      "stock": 80,
+      "description": "100% real squeezed orange juice with natural pulp, no added sugar.",
+      "upsell_ids": ["sku_trop_apple_1l"]
+    },
+    {
+      "id": "sku_trop_apple_1l",
+      "company": "Tropicana",
+      "name": "Tropicana Apple Delight Juice (1L)",
+      "category": "beverage",
+      "price_paise": 13000,
+      "currency": "INR",
+      "stock": 65,
+      "description": "Crisp Himalayan apple nectar, pasteurised for freshness.",
+      "upsell_ids": []
+    },
+    {
+      "id": "sku_trop_mixed_1l",
+      "company": "Tropicana",
+      "name": "Tropicana Mixed Fruit Blend (1L)",
+      "category": "beverage",
+      "price_paise": 13500,
+      "currency": "INR",
+      "stock": 70,
+      "description": "Nutritious multi-fruit blend with mango, banana, and orange.",
+      "upsell_ids": []
+    },
+    {
+      "id": "sku_trop_guava_1l",
+      "company": "Tropicana",
+      "name": "Tropicana Premium Guava Nectar (1L)",
+      "category": "beverage",
+      "price_paise": 14000,
+      "currency": "INR",
+      "stock": 50,
+      "description": "Thick pink guava nectar with vitamin C fortification.",
+      "upsell_ids": []
+    },
+    {
+      "id": "sku_trop_sparkling_grape",
+      "company": "Tropicana",
+      "name": "Tropicana Sparkling White Grape (750ml)",
+      "category": "beverage",
+      "price_paise": 19500,
+      "currency": "INR",
+      "stock": 40,
+      "description": "Effervescent celebration fruit drink made from European white grapes.",
+      "upsell_ids": []
+    },
+    {
+      "id": "sku_amul_butter_500g",
+      "company": "Amul",
+      "name": "Amul Pasteurised Butter (500g)",
+      "category": "dairy",
+      "price_paise": 27500,
+      "currency": "INR",
+      "stock": 90,
+      "description": "India's beloved salted dairy butter, churned from fresh cream.",
+      "upsell_ids": ["sku_amul_cheese_400g"]
+    },
+    {
+      "id": "sku_amul_gold_1l",
+      "company": "Amul",
+      "name": "Amul Gold Full Cream Milk (1L Tetra)",
+      "category": "dairy",
+      "price_paise": 7400,
+      "currency": "INR",
+      "stock": 120,
+      "description": "Homogenised UHT long-life full cream milk (6% fat).",
+      "upsell_ids": []
+    },
+    {
+      "id": "sku_amul_cheese_400g",
+      "company": "Amul",
+      "name": "Amul Processed Cheese Block (400g)",
+      "category": "dairy",
+      "price_paise": 29000,
+      "currency": "INR",
+      "stock": 60,
+      "description": "Rich, creamy processed cheddar cheese block for cooking and snacking.",
+      "upsell_ids": []
+    },
+    {
+      "id": "sku_amul_ghee_1l",
+      "company": "Amul",
+      "name": "Amul Pure Cow Ghee Tin (1L)",
+      "category": "dairy",
+      "price_paise": 65000,
+      "currency": "INR",
+      "stock": 45,
+      "description": "Traditional aromatic golden clarified butter made from cow milk.",
+      "upsell_ids": []
+    },
+    {
+      "id": "sku_amul_dark_choc",
+      "company": "Amul",
+      "name": "Amul 55% Rich Dark Chocolate Bar (150g)",
+      "category": "confectionery",
+      "price_paise": 12000,
+      "currency": "INR",
+      "stock": 85,
+      "description": "Gourmet dark chocolate crafted with single-origin cocoa beans.",
+      "upsell_ids": []
+    },
+    {
+      "id": "sku_mini_niacinamide",
+      "company": "Minimalist",
+      "name": "Minimalist Niacinamide 10% Face Serum (30ml)",
+      "category": "skincare",
+      "price_paise": 59900,
+      "currency": "INR",
+      "stock": 55,
+      "description": "Blemish & oil control serum with zinc and aloe vera base.",
+      "upsell_ids": ["sku_mini_sunscreen_spf50"]
+    },
+    {
+      "id": "sku_mini_salicylic_cleanser",
+      "company": "Minimalist",
+      "name": "Minimalist Salicylic Acid 2% Face Cleanser (100ml)",
+      "category": "skincare",
+      "price_paise": 29900,
+      "currency": "INR",
+      "stock": 75,
+      "description": "Gentle BHA exfoliating cleanser for acne and blackheads.",
+      "upsell_ids": []
+    },
+    {
+      "id": "sku_mini_vit_c",
+      "company": "Minimalist",
+      "name": "Minimalist Vitamin C 10% Glow Serum (30ml)",
+      "category": "skincare",
+      "price_paise": 69900,
+      "currency": "INR",
+      "stock": 40,
+      "description": "Brightening serum formulated with stable ethyl ascorbic acid and centella.",
+      "upsell_ids": []
+    },
+    {
+      "id": "sku_mini_sunscreen_spf50",
+      "company": "Minimalist",
+      "name": "Minimalist Multi-Vitamin SPF 50 Sunscreen (50g)",
+      "category": "skincare",
+      "price_paise": 39900,
+      "currency": "INR",
+      "stock": 90,
+      "description": "Broad spectrum UVA/UVB protection with zero white cast.",
+      "upsell_ids": []
+    },
+    {
+      "id": "sku_mini_marula_moisturizer",
+      "company": "Minimalist",
+      "name": "Minimalist Marula Oil 5% Intense Moisturizer (50g)",
+      "category": "skincare",
+      "price_paise": 39900,
+      "currency": "INR",
+      "stock": 60,
+      "description": "Deeply hydrating barrier repair moisturizer with hyaluronic acid.",
+      "upsell_ids": []
+    },
+    {
+      "id": "sku_nestle_maggi_12p",
+      "company": "Nestle",
+      "name": "Maggi 2-Minute Masala Noodles (Pack of 12)",
+      "category": "food",
+      "price_paise": 16800,
+      "currency": "INR",
+      "stock": 110,
+      "description": "Classic roasted spice instant noodles, favourite family pack.",
+      "upsell_ids": ["sku_nestle_nescafe_200g"]
+    },
+    {
+      "id": "sku_nestle_nescafe_200g",
+      "company": "Nestle",
+      "name": "Nescafe Classic Instant Coffee Jar (200g)",
+      "category": "beverage",
+      "price_paise": 62000,
+      "currency": "INR",
+      "stock": 50,
+      "description": "100% pure Robusta coffee beans, signature rich aroma.",
+      "upsell_ids": []
+    },
+    {
+      "id": "sku_nestle_everyday_1kg",
+      "company": "Nestle",
+      "name": "Nestle Everyday Dairy Whitener (1kg Pouch)",
+      "category": "dairy",
+      "price_paise": 54000,
+      "currency": "INR",
+      "stock": 45,
+      "description": "Speciality dairy whitener for rich and thick tea and coffee.",
+      "upsell_ids": []
+    },
+    {
+      "id": "sku_nestle_kitkat_share",
+      "company": "Nestle",
+      "name": "KitKat 4-Finger Chocolate Share Bag (Pack of 8)",
+      "category": "confectionery",
+      "price_paise": 24000,
+      "currency": "INR",
+      "stock": 80,
+      "description": "Crispy wafer fingers covered in smooth milk chocolate.",
+      "upsell_ids": []
+    },
+    {
+      "id": "sku_nestle_milkmaid_400g",
+      "company": "Nestle",
+      "name": "Nestle Milkmaid Sweetened Condensed Milk (400g)",
+      "category": "grocery",
+      "price_paise": 14400,
+      "currency": "INR",
+      "stock": 65,
+      "description": "Rich and creamy dessert base made from pure full cream milk.",
       "upsell_ids": []
     }
   ]

@@ -44,7 +44,10 @@ MAX_SESSION_SPEND_PAISE = 2_000_000         # INR 20,000 total per buyer session
 HUMAN_CONFIRM_ABOVE_PAISE = 500_000         # INR 5,000+ needs explicit buyer confirmation
 MAX_LINE_QTY = 20                           # no single line item over this qty
 
-ALLOWED_CATEGORIES = {"roofing", "tiles", "accessory", "service"}
+ALLOWED_CATEGORIES = {
+    "roofing", "tiles", "accessory", "service",
+    "beverage", "dairy", "skincare", "food", "confectionery", "grocery"
+}
 
 # Simulated gateway ceiling used only by the mock client, to mirror the fact
 # that real payment gateways reject absurdly large single transactions.

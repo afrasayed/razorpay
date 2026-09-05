@@ -47,6 +47,7 @@ class CheckoutRequest(BaseModel):
     customer_goal: str = Field(default="", description="Customer's shopping goal for auditor context")
     groq_api_key: str = Field(default="", description="Groq API key for independent auditor")
     gemini_api_key: str = Field(default="", description="Gemini API key for AI buyer agent")
+    company: Optional[str] = Field(default=None, description="Target company or brand name")
 
 
 class AuditResult(BaseModel):
@@ -79,6 +80,12 @@ class CustomerOrderRequest(BaseModel):
     auto_restock: bool = Field(default=True, description="Auto-trigger restock if stock drops below threshold")
     gemini_api_key: str = Field(default="", description="Gemini API key for auto-restock")
     groq_api_key: str = Field(default="", description="Groq API key for auto-restock auditor")
+    company: Optional[str] = Field(default="Afra Infra", description="Company or brand name")
+
+
+class GenerateCustomerOrderRequest(BaseModel):
+    groq_api_key: str = Field(default="", description="Optional Groq API key for customer agent")
+    company: Optional[str] = Field(default=None, description="Target company name")
 
 
 class RestockApprovalRequest(BaseModel):
@@ -89,6 +96,7 @@ class RestockApprovalRequest(BaseModel):
 class RestockCheckRequest(BaseModel):
     gemini_api_key: str = Field(default="", description="Gemini API key for AI buyer agent")
     groq_api_key: str = Field(default="", description="Groq API key for independent auditor")
+    company: Optional[str] = Field(default="Afra Infra", description="Company or brand name")
 
 
 class HeldOrderApprovalRequest(BaseModel):
@@ -96,9 +104,15 @@ class HeldOrderApprovalRequest(BaseModel):
     buyer_confirmed_high_value: bool = Field(default=False, description="Buyer confirmed high-value order")
 
 
+@app.get("/companies")
+def get_companies():
+    """Get list of supported companies."""
+    return catalog.get_companies()
+
+
 @app.get("/.well-known/agent-catalog.json")
-def agent_catalog():
-    manifest = catalog.get_manifest()
+def agent_catalog(company: Optional[str] = None):
+    manifest = catalog.get_manifest(company=company)
     manifest["_agent_contract"] = {
         "checkout_endpoint": "/agent/checkout",
         "note": "Every checkout is policy-gated and logged. Amounts above the merchant's "
@@ -118,40 +132,50 @@ def checkout(req: CheckoutRequest) -> CheckoutResponse:
         customer_goal=req.customer_goal,
         groq_api_key=req.groq_api_key,
         gemini_api_key=req.gemini_api_key,
+        company=req.company,
     )
     return result
 
 
 @app.get("/audit")
-def get_audit(session_id: str | None = None):
-    return audit.for_session(session_id) if session_id else audit.all_entries()
+def get_audit(session_id: str | None = None, company: str | None = None):
+    return audit.for_session(session_id, company=company) if session_id else audit.all_entries(company=company)
 
 
 @app.get("/audit.md")
-def get_audit_md(session_id: str | None = None):
-    entries = audit.for_session(session_id) if session_id else audit.all_entries()
+def get_audit_md(session_id: str | None = None, company: str | None = None):
+    entries = audit.for_session(session_id, company=company) if session_id else audit.all_entries(company=company)
     return Response(content=AuditTrail.render_markdown(entries), media_type="text/markdown")
 
 
 # Inventory management endpoints
 @app.get("/inventory")
-def get_inventory_endpoint():
+def get_inventory_endpoint(company: Optional[str] = None):
     """Get current inventory levels."""
-    return inventory.get_inventory()
+    return inventory.get_inventory(company=company)
+
+
+@app.post("/inventory/reset")
+def reset_inventory_endpoint(company: Optional[str] = None):
+    """Reset inventory to initial seed levels."""
+    inventory.reset_inventory(company=company)
+    return {"success": True, "message": f"Inventory reset for {company or 'all companies'}"}
+
 
 
 @app.post("/customer-order")
 def process_customer_order_endpoint(req: CustomerOrderRequest):
     """Process a customer order (depletes inventory) and optionally auto-trigger restock."""
     items = [{"sku": item.sku, "qty": item.qty} for item in req.items]
-    result = inventory.process_customer_order(items, req.notes)
+    company = req.company or "Afra Infra"
+    result = inventory.process_customer_order(items, req.notes, company=company)
     
     # Auto-trigger restock if enabled and order was successful
     auto_restock_result = None
     if result.get("success") and req.auto_restock:
         try:
-            # Check for items below threshold
-            low_stock_items = inventory.get_items_below_threshold()
+            # Check for items below threshold for this company
+            low_stock_items = inventory.get_items_below_threshold(company=company)
             
             if low_stock_items:
                 # Log auto-trigger in audit trail
@@ -159,18 +183,19 @@ def process_customer_order_endpoint(req: CustomerOrderRequest):
                 audit.log(
                     auto_restock_session,
                     "auto_restock_check",
-                    summary=f"Auto-restock triggered by customer order. {len(low_stock_items)} items below threshold.",
-                    inputs={"customer_order_items": items, "low_stock_items": [item['sku'] for item in low_stock_items]},
+                    summary=f"[{company}] Auto-restock triggered by customer order. {len(low_stock_items)} items below threshold.",
+                    inputs={"customer_order_items": items, "low_stock_items": [item['sku'] for item in low_stock_items], "company": company},
                     outcome="info",
                     explanation="Customer order depleted stock below threshold, triggering automatic restock decision.",
+                    company=company
                 )
                 
                 # Trigger restock decisions
-                catalog_data = catalog.get_manifest()
+                catalog_data = catalog.get_manifest(company=company)
                 restock_decisions = []
                 
                 for item in low_stock_items:
-                    goal = f"Auto-restock {item['name']} (SKU: {item['sku']}) - current stock: {item['quantity']}, threshold: {item['reorder_threshold']}. Triggered by customer order depletion."
+                    goal = f"Auto-restock {item['name']} (SKU: {item['sku']}) for {company} - current stock: {item['quantity']}, threshold: {item['reorder_threshold']}. Triggered by customer order depletion."
                     
                     try:
                         from app.agent import get_ai_buyer_cart
@@ -189,22 +214,26 @@ def process_customer_order_endpoint(req: CustomerOrderRequest):
                             
                             # Process through checkout pipeline
                             restock_session_id = f"auto_restock_{item['sku']}_{uuid.uuid4().hex[:8]}"
+                            groq_key = req.groq_api_key or os.getenv("GROQ_API_KEY", "")
+                            gemini_key = req.gemini_api_key or os.getenv("GEMINI_API_KEY", "")
                             checkout_result = agent.checkout(
                                 session_id=restock_session_id,
                                 items=cart_items,
                                 accept_upsell=False,
                                 buyer_confirmed_high_value=True,
-                                with_auditor=bool(req.groq_api_key),
+                                with_auditor=bool(groq_key),
                                 customer_goal=goal,
-                                groq_api_key=req.groq_api_key,
-                                gemini_api_key=req.gemini_api_key,
+                                groq_api_key=groq_key,
+                                gemini_api_key=gemini_key,
+                                company=company,
                             )
                             
                             # Create restock order record
                             order_id = inventory.create_restock_order(
                                 items=cart_items,
                                 total_paise=total_paise,
-                                ai_decision_context=f"Auto-triggered by customer order depletion. Mode: {mode}"
+                                ai_decision_context=f"Auto-triggered by customer order depletion for {company}. Mode: {mode}",
+                                company=company
                             )
                             
                             # Update restock order status
@@ -217,13 +246,14 @@ def process_customer_order_endpoint(req: CustomerOrderRequest):
                             elif checkout_result.get("success"):
                                 inventory.update_restock_order_status(order_id, "completed")
                                 for cart_item in cart_items:
-                                    inventory.update_stock(cart_item["product_id"], cart_item["qty"])
+                                    inventory.update_stock(cart_item["product_id"], cart_item["qty"], company=company)
                             else:
                                 inventory.update_restock_order_status(order_id, "rejected")
                             
                             restock_decisions.append({
                                 "sku": item["sku"],
                                 "name": item["name"],
+                                "company": company,
                                 "current_stock": item["quantity"],
                                 "reorder_threshold": item["reorder_threshold"],
                                 "restock_qty": sum(ci.get("qty", 0) for ci in cart_items),
@@ -243,11 +273,13 @@ def process_customer_order_endpoint(req: CustomerOrderRequest):
                         restock_decisions.append({
                             "sku": item["sku"],
                             "name": item["name"],
+                            "company": company,
                             "error": str(e)
                         })
                 
                 auto_restock_result = {
                     "triggered": True,
+                    "company": company,
                     "items_below_threshold": len(low_stock_items),
                     "restock_decisions": restock_decisions,
                     "trigger_type": "auto_triggered_by_customer_order"
@@ -257,15 +289,17 @@ def process_customer_order_endpoint(req: CustomerOrderRequest):
                 audit.log(
                     auto_restock_session,
                     "auto_restock_complete",
-                    summary=f"Auto-restock completed. {len([d for d in restock_decisions if 'checkout_result' in d])} restock decisions processed.",
-                    inputs={"restock_decisions_count": len(restock_decisions)},
+                    summary=f"[{company}] Auto-restock completed. {len([d for d in restock_decisions if 'checkout_result' in d])} restock decisions processed.",
+                    inputs={"restock_decisions_count": len(restock_decisions), "company": company},
                     outcome="info",
                     explanation="Automatic restock decisions processed and inventory updated where applicable.",
+                    company=company
                 )
                 
         except Exception as e:
             auto_restock_result = {
                 "triggered": True,
+                "company": company,
                 "error": str(e),
                 "trigger_type": "auto_triggered_by_customer_order"
             }
@@ -278,21 +312,32 @@ def process_customer_order_endpoint(req: CustomerOrderRequest):
 
 
 @app.get("/customer-orders")
-def get_customer_orders_endpoint(limit: int = 20):
+def get_customer_orders_endpoint(limit: int = 20, company: Optional[str] = None):
     """Get recent customer orders."""
-    return inventory.get_customer_orders(limit)
+    return inventory.get_customer_orders(limit=limit, company=company)
+
+
+@app.api_route("/customer-order/generate", methods=["GET", "POST"])
+def generate_customer_order_endpoint(req: Optional[GenerateCustomerOrderRequest] = None, groq_api_key: str = "", company: Optional[str] = None):
+    """Generate a customer order using Groq as a lightweight customer agent."""
+    req_company = (req.company if req else None) or company or "Afra Infra"
+    inv_items = inventory.get_inventory(company=req_company)
+    key = (req.groq_api_key if req else "") or groq_api_key or os.getenv("GROQ_API_KEY", "")
+    from app import auditor
+    return auditor.generate_customer_order(inv_items, groq_api_key=key, company=req_company)
+
 
 
 @app.get("/restock-orders")
-def get_restock_orders_endpoint(limit: int = 20):
+def get_restock_orders_endpoint(limit: int = 20, company: Optional[str] = None):
     """Get recent restock orders."""
-    return inventory.get_restock_orders(limit)
+    return inventory.get_restock_orders(limit=limit, company=company)
 
 
 @app.get("/inventory/check")
-def check_inventory_threshold():
+def check_inventory_threshold(company: Optional[str] = None):
     """Check which items are below reorder threshold."""
-    return inventory.get_items_below_threshold()
+    return inventory.get_items_below_threshold(company=company)
 
 
 @app.post("/restock/approve")
@@ -370,23 +415,25 @@ def check_and_trigger_restock(req: RestockCheckRequest):
     3. Processes each restock decision through the full checkout pipeline
     4. Returns the decisions made
     """
-    # Get items below threshold
-    low_stock_items = inventory.get_items_below_threshold()
+    company = req.company or "Afra Infra"
+    # Get items below threshold for company
+    low_stock_items = inventory.get_items_below_threshold(company=company)
     
     if not low_stock_items:
         return {
             "success": True,
-            "message": "All items are above reorder threshold. No restock needed.",
+            "company": company,
+            "message": f"All items for {company} are above reorder threshold. No restock needed.",
             "restock_decisions": [],
             "low_stock_items": []
         }
     
     restock_decisions = []
-    catalog_data = catalog.get_manifest()
+    catalog_data = catalog.get_manifest(company=company)
     
     for item in low_stock_items:
         # Create a restock goal for the AI buyer
-        goal = f"Restock {item['name']} (SKU: {item['sku']}) - current stock: {item['quantity']}, threshold: {item['reorder_threshold']}. Order a reasonable quantity to bring stock back to healthy levels."
+        goal = f"Restock {item['name']} (SKU: {item['sku']}) for {company} - current stock: {item['quantity']}, threshold: {item['reorder_threshold']}. Order a reasonable quantity to bring stock back to healthy levels."
         
         try:
             # Call the AI buyer agent (same logic as in agent.py)
@@ -410,22 +457,26 @@ def check_and_trigger_restock(req: RestockCheckRequest):
                 restock_session_id = f"restock_{item['sku']}_{uuid.uuid4().hex[:8]}"
                 
                 # Process through the full checkout pipeline
+                groq_key = req.groq_api_key or os.getenv("GROQ_API_KEY", "")
+                gemini_key = req.gemini_api_key or os.getenv("GEMINI_API_KEY", "")
                 checkout_result = agent.checkout(
                     session_id=restock_session_id,
                     items=cart_items,
                     accept_upsell=False,  # No upsells for restock
                     buyer_confirmed_high_value=True,  # Auto-confirm for restock
-                    with_auditor=bool(req.groq_api_key),  # Use auditor if key provided
+                    with_auditor=bool(groq_key),  # Use auditor if key provided
                     customer_goal=goal,
-                    groq_api_key=req.groq_api_key,
-                    gemini_api_key=req.gemini_api_key,
+                    groq_api_key=groq_key,
+                    gemini_api_key=gemini_key,
+                    company=company,
                 )
                 
                 # Create restock order record
                 order_id = inventory.create_restock_order(
                     items=cart_items,
                     total_paise=total_paise,
-                    ai_decision_context=f"AI decided to restock based on goal: {goal}. Mode: {mode}"
+                    ai_decision_context=f"AI decided to restock based on goal: {goal}. Mode: {mode}",
+                    company=company
                 )
                 
                 # Update restock order status based on checkout result
@@ -442,7 +493,7 @@ def check_and_trigger_restock(req: RestockCheckRequest):
                     inventory.update_restock_order_status(order_id, "completed")
                     # Update inventory
                     for cart_item in cart_items:
-                        inventory.update_stock(cart_item["product_id"], cart_item["qty"])
+                        inventory.update_stock(cart_item["product_id"], cart_item["qty"], company=company)
                 else:
                     # Order failed (policy, etc.)
                     inventory.update_restock_order_status(order_id, "rejected")
@@ -450,6 +501,7 @@ def check_and_trigger_restock(req: RestockCheckRequest):
                 restock_decisions.append({
                     "sku": item["sku"],
                     "name": item["name"],
+                    "company": company,
                     "current_stock": item["quantity"],
                     "threshold": item["reorder_threshold"],
                     "restock_items": cart_items,
@@ -470,6 +522,7 @@ def check_and_trigger_restock(req: RestockCheckRequest):
             restock_decisions.append({
                 "sku": item["sku"],
                 "name": item["name"],
+                "company": company,
                 "error": str(e),
                 "current_stock": item["quantity"],
                 "threshold": item["reorder_threshold"]
@@ -477,7 +530,8 @@ def check_and_trigger_restock(req: RestockCheckRequest):
     
     return {
         "success": True,
-        "message": f"Processed {len(low_stock_items)} low-stock items through checkout pipeline",
+        "company": company,
+        "message": f"Processed {len(low_stock_items)} low-stock items for {company} through checkout pipeline",
         "low_stock_items": low_stock_items,
         "restock_decisions": restock_decisions
     }

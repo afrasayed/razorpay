@@ -32,12 +32,13 @@ def get_ai_buyer_cart(goal: str, catalog_data: dict, gemini_api_key: str = "") -
     Returns:
         tuple: (cart_items, mode_used, error_message) where mode_used is "gemini" or "mock"
     """
-    # Try Gemini API if key is provided
-    if gemini_api_key:
+    effective_key = gemini_api_key or os.getenv("GEMINI_API_KEY", "")
+    # Try Gemini API if key is provided or in environment
+    if effective_key:
         try:
             import google.generativeai as genai
             
-            genai.configure(api_key=gemini_api_key)
+            genai.configure(api_key=effective_key)
             
             system_prompt = """You are an AI buyer agent. Your task is to choose products from a merchant catalog to fulfill a shopping goal.
 
@@ -152,7 +153,14 @@ class CheckoutAgent:
         customer_goal: str = "",
         groq_api_key: str = "",
         gemini_api_key: str = "",
+        company: str = "Afra Infra",
     ) -> dict:
+        target_company = company or "Afra Infra"
+
+        def log_audit(action_type, summary, **kwargs):
+            kwargs.setdefault("company", target_company)
+            return self.audit.log(session_id, action_type, summary, **kwargs)
+
         # 1. Resolve cart (or use AI buyer if no items provided)
         cart = []
         unresolved = []

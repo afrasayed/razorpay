@@ -32,6 +32,8 @@ for item in low_stock:
     print(f"  {item['sku']}: {item['quantity']} (threshold: {item['reorder_threshold']})")
 
 import os
+from app.config import _load_env_file
+_load_env_file()
 
 # Trigger AI restock check
 print("\nStep 4: Triggering AI restock check...")

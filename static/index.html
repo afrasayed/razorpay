@@ -13,12 +13,48 @@
   * { box-sizing:border-box; }
   body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; }
   
-  /* Header */
-  header { background:linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%); color:white; padding:20px 32px; box-shadow:0 2px 10px rgba(30,58,138,0.15); }
-  header h1 { font-size:24px; margin:0 0 6px; font-weight:700; letter-spacing:-0.5px; }
-  header p { margin:0; opacity:0.9; font-size:14px; }
-  .badges-row { display:flex; gap:8px; margin-top:12px; flex-wrap:wrap; }
+  /* Header & Company Switcher */
+  header { background:linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%); color:white; padding:18px 32px; box-shadow:0 2px 10px rgba(30,58,138,0.15); }
+  .header-content { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px; }
+  header h1 { font-size:22px; margin:0 0 4px; font-weight:700; letter-spacing:-0.5px; }
+  header p { margin:0; opacity:0.9; font-size:13.5px; }
+  .badges-row { display:flex; gap:8px; margin-top:10px; flex-wrap:wrap; }
   .badge { background:rgba(255,255,255,0.2); padding:4px 12px; border-radius:20px; font-size:12px; font-weight:600; backdrop-filter:blur(4px); }
+  
+  .company-switcher-container {
+    display:flex;
+    align-items:center;
+    gap:10px;
+    background:rgba(255,255,255,0.18);
+    border:1.5px solid rgba(255,255,255,0.35);
+    padding:8px 14px;
+    border-radius:12px;
+    backdrop-filter:blur(10px);
+    box-shadow:0 4px 14px rgba(0,0,0,0.12);
+  }
+  .company-switcher-label {
+    font-size:11.5px;
+    font-weight:700;
+    color:rgba(255,255,255,0.95);
+    letter-spacing:0.5px;
+    text-transform:uppercase;
+  }
+  #companySelector {
+    background:white;
+    color:#1e3a8a;
+    border:1.5px solid #3b82f6;
+    border-radius:8px;
+    padding:7px 12px;
+    font-size:13.5px;
+    font-weight:700;
+    cursor:pointer;
+    outline:none;
+    box-shadow:0 1px 4px rgba(0,0,0,0.08);
+  }
+  #companySelector:focus {
+    border-color:#2563eb;
+    box-shadow:0 0 0 3px rgba(59,130,246,0.3);
+  }
   
   /* Layout */
   .wrap { display:grid; grid-template-columns:460px 1fr; gap:0; min-height:calc(100vh - 98px); }
@@ -316,13 +352,30 @@
 </head>
 <body>
 <header>
-  <h1>Afra Infra — Smart Roofing & Tiles</h1>
-  <p>Autonomous AI Merchant Pipeline: Depletion &bull; AI Restock &bull; Groq Auditor &bull; Policy Gates</p>
-  <div class="badges-row">
-    <span class="badge">🤖 Gemini 2.5 Buyer Agent</span>
-    <span class="badge">🔒 Policy &amp; Ceiling Gates</span>
-    <span class="badge">👁️ Groq Independent Auditor</span>
-    <span class="badge">⚡ Razorpay Mock Gateway</span>
+  <div class="header-content">
+    <div>
+      <h1 id="appHeaderTitle">Afra Infra — Smart Roofing &amp; Tiles</h1>
+      <p id="appHeaderSubtitle">Autonomous AI Merchant Pipeline: Depletion &bull; AI Restock &bull; Groq Auditor &bull; Policy Gates</p>
+      <div class="badges-row">
+        <span class="badge">🤖 Gemini 2.5 Buyer Agent</span>
+        <span class="badge">🔒 Policy &amp; Ceiling Gates</span>
+        <span class="badge">👁️ Groq Independent Auditor</span>
+        <span class="badge">⚡ Razorpay Mock Gateway</span>
+      </div>
+    </div>
+    <div class="company-switcher-container">
+      <div style="display:flex; flex-direction:column; gap:4px;">
+        <span class="company-switcher-label">🏢 Active Company</span>
+        <select id="companySelector" onchange="onCompanyChange(this.value)" aria-label="Select Active Company">
+          <option value="Afra Infra" selected>Afra Infra (Roofing &amp; Tiles)</option>
+          <option value="Tropicana">Tropicana (Juices &amp; Beverages)</option>
+          <option value="Amul">Amul (Dairy &amp; Fresh Goods)</option>
+          <option value="Minimalist">Minimalist (Active Skincare)</option>
+          <option value="Nestle">Nestle (Pantry &amp; Confectionery)</option>
+        </select>
+      </div>
+      <span class="badge" id="companyBadge" style="background:rgba(255,255,255,0.25); font-size:12px; font-weight:600; align-self:flex-end;">Roofing &amp; Infrastructure</span>
+    </div>
   </div>
 </header>
 <div class="wrap">
@@ -351,6 +404,9 @@
           <button id="simToggleBtn" class="sim-btn" onclick="toggleSimulation()">
             ▶ Start Simulation
           </button>
+          <button id="simSingleBtn" class="sim-btn" style="background:var(--accent); color:#fff; border-color:var(--accent); margin-left:8px;" onclick="runSimulatedStep()" title="Trigger a single AI Customer Agent order">
+            ⚡ AI Customer Order
+          </button>
         </div>
       </div>
 
@@ -377,6 +433,7 @@
       
       <div class="actions">
         <button onclick="processCustomerOrder()">💰 Process Customer Order</button>
+        <button class="secondary" onclick="runSimulatedStep()" title="Let AI Customer Agent generate an order">🤖 Generate with AI Agent</button>
         <button class="secondary" onclick="loadCustomerOrders()">🔄 Refresh Orders</button>
       </div>
       
@@ -518,8 +575,9 @@
 </div>
 
 <script>
+let activeCompany = "Afra Infra";
 let SESSION = "session_" + Math.random().toString(36).slice(2, 8);
-let cachedCatalog = null;
+let cachedCatalogs = {};
 
 // Initialize on DOM load
 document.addEventListener('DOMContentLoaded', function() {
@@ -531,10 +589,71 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
   
-  // Default to customer orders tab setup
+  // Default to customer orders tab setup with active company
   switchTab('customer');
   loadAudit();
 });
+
+/* =========================================================================
+   Company Switcher Logic (In-place dynamic switching)
+   ========================================================================= */
+async function onCompanyChange(company) {
+  activeCompany = company;
+  
+  // Update header text, description and brand badge dynamically
+  const profiles = {
+    'Afra Infra': { title: 'Afra Infra — Smart Roofing & Tiles', badge: 'Roofing & Infrastructure', notes: 'Contractor order for roofing project' },
+    'Tropicana': { title: 'Tropicana — 100% Real Fruit Juices', badge: 'Beverages & Juices', notes: 'Supermarket weekly juice restock' },
+    'Amul': { title: 'Amul — The Taste of India', badge: 'Dairy & Fresh Produce', notes: 'Daily dairy distributor supply replenishment' },
+    'Minimalist': { title: 'Minimalist — Pure & Science-Backed Skincare', badge: 'Active Skincare & Derm', notes: 'Pharmacy cosmetics reorder' },
+    'Nestle': { title: 'Nestle — Good Food, Good Life', badge: 'Pantry & Packaged Goods', notes: 'Retail grocery distribution order' }
+  };
+  const profile = profiles[company] || { title: `${company} Store`, badge: company, notes: `Order for ${company}` };
+  
+  const titleEl = document.getElementById('appHeaderTitle');
+  if (titleEl) titleEl.textContent = profile.title;
+  const badgeEl = document.getElementById('companyBadge');
+  if (badgeEl) badgeEl.textContent = profile.badge;
+  const notesInput = document.getElementById('customerOrderNotes');
+  if (notesInput) notesInput.placeholder = `e.g., ${profile.notes}`;
+  
+  // Pipeline notification card
+  const container = document.getElementById('pipelineTimeline');
+  if (container) {
+    const emptyPlaceholder = container.querySelector('.pipeline-empty');
+    if (emptyPlaceholder) emptyPlaceholder.remove();
+    const switchCard = document.createElement('div');
+    switchCard.className = 'pipeline-order-card';
+    switchCard.style.borderLeft = '4px solid var(--purple)';
+    switchCard.style.background = 'linear-gradient(to right, rgba(139, 92, 246, 0.08), var(--panel))';
+    switchCard.innerHTML = `
+      <div class="pipeline-step revealed">
+        <span class="pipeline-step-text" style="color:var(--purple); font-weight:700;">🏢 Active Merchant Switched to: ${company} (${profile.badge})</span>
+        <span class="pipeline-time">[${new Date().toLocaleTimeString()}]</span>
+      </div>
+    `;
+    container.appendChild(switchCard);
+    scrollPipelineToBottom();
+  }
+  
+  // Fetch fresh catalog for the new company and reset order line items
+  const cat = await ensureCatalogLoaded(company);
+  const itemsContainer = document.getElementById('customerOrderItems');
+  if (itemsContainer) {
+    itemsContainer.innerHTML = '';
+    if (cat && cat.products && cat.products.length > 0) {
+      addCustomerOrderItem(cat.products[0].id, 2);
+    }
+  }
+  
+  // Refresh all views in-place without page reload
+  loadInventory();
+  loadCustomerOrders();
+  checkInventoryThreshold();
+  loadRestockOrders();
+  loadCatalog();
+  loadAudit();
+}
 
 /* =========================================================================
    Tab Switching Logic
@@ -548,12 +667,12 @@ function switchTab(tabName) {
     if (content) content.classList.toggle('active', t === tabName);
   });
   
-  // Tab-specific lazy data loading to ensure fast load and no errors
+  // Tab-specific lazy data loading
   if (tabName === 'customer') {
-    ensureCatalogLoaded().then(() => {
+    ensureCatalogLoaded(activeCompany).then((cat) => {
       const container = document.getElementById('customerOrderItems');
-      if (container && container.children.length === 0) {
-        addCustomerOrderItem('sku_roof_sheet_std', 2);
+      if (container && container.children.length === 0 && cat && cat.products && cat.products.length > 0) {
+        addCustomerOrderItem(cat.products[0].id, 2);
       }
     });
     loadCustomerOrders();
@@ -570,12 +689,14 @@ function switchTab(tabName) {
 /* =========================================================================
    Catalog Loader & Helpers
    ========================================================================= */
-async function ensureCatalogLoaded() {
-  if (cachedCatalog) return cachedCatalog;
+async function ensureCatalogLoaded(company = null) {
+  const comp = company || activeCompany;
+  if (cachedCatalogs[comp]) return cachedCatalogs[comp];
   try {
-    const res = await fetch('/.well-known/agent-catalog.json');
-    cachedCatalog = await res.json();
-    return cachedCatalog;
+    const res = await fetch(`/.well-known/agent-catalog.json?company=${encodeURIComponent(comp)}`);
+    const data = await res.json();
+    cachedCatalogs[comp] = data;
+    return data;
   } catch (err) {
     console.error('Failed to load catalog:', err);
     return null;
@@ -583,7 +704,7 @@ async function ensureCatalogLoaded() {
 }
 
 async function loadCatalog() {
-  const data = await ensureCatalogLoaded();
+  const data = await ensureCatalogLoaded(activeCompany);
   if (!data) return;
   
   const box = document.getElementById('products');
@@ -700,19 +821,81 @@ function scheduleNextSimulation(customDelay = null) {
 }
 
 async function runSimulatedStep() {
+  const container = document.getElementById('pipelineTimeline');
+  let loadingCard = null;
+  
+  // 1. Show non-blocking loading state
+  if (container) {
+    const emptyPlaceholder = container.querySelector('.pipeline-empty');
+    if (emptyPlaceholder) emptyPlaceholder.remove();
+    loadingCard = document.createElement('div');
+    loadingCard.id = 'customerAgentLoading';
+    loadingCard.className = 'pipeline-order-card';
+    loadingCard.style.borderLeft = '4px solid var(--accent)';
+    loadingCard.innerHTML = `
+      <div class="pipeline-step revealed">
+        <span class="pipeline-step-text" style="color:var(--accent); font-weight:600;">🤖 [${activeCompany}] Customer agent deciding order...</span>
+        <span class="pipeline-time">[${new Date().toLocaleTimeString()}]</span>
+      </div>
+    `;
+    container.appendChild(loadingCard);
+    scrollPipelineToBottom();
+  }
+  
+  const statsEl = document.getElementById('simulationStats');
+  if (statsEl) {
+    statsEl.innerHTML = `<span style="color:var(--accent); font-weight:600;">🤖 [${activeCompany}] Deciding order...</span>`;
+  }
+  
+  let orderDecision = null;
+  const groqApiKey = (document.getElementById('groqApiKey') ? document.getElementById('groqApiKey').value : '') || 
+                     (document.getElementById('restockGroqKey') ? document.getElementById('restockGroqKey').value : '');
+                     
   try {
-    const res = await fetch('/inventory');
+    // Single Groq call with 2.5s timeout scoped to activeCompany
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 2500);
+    
+    const res = await fetch('/customer-order/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ groq_api_key: groqApiKey, company: activeCompany }),
+      signal: controller.signal
+    });
+    clearTimeout(timeoutId);
+    
+    if (res.ok) {
+      orderDecision = await res.json();
+    }
+  } catch (err) {
+    console.warn('[Customer Agent Fallback] Generation request error or timeout:', err);
+  } finally {
+    if (loadingCard && loadingCard.parentNode) {
+      loadingCard.remove();
+    }
+    updateSimulationCounter();
+  }
+  
+  try {
+    // If Groq generation succeeded and returned valid SKU + positive quantity
+    if (orderDecision && orderDecision.sku && orderDecision.quantity > 0) {
+      const simItems = [{ sku: orderDecision.sku, qty: orderDecision.quantity }];
+      const reason = orderDecision.reason || `Purchasing ${orderDecision.quantity}x ${orderDecision.product}`;
+      await processCustomerOrder(simItems, reason, true, reason);
+      return;
+    }
+    
+    // Graceful fallback to company-filtered selection if Groq is unavailable
+    console.warn(`[Customer Agent Fallback] Falling back to local inventory selection for ${activeCompany}.`);
+    const res = await fetch(`/inventory?company=${encodeURIComponent(activeCompany)}`);
     const inv = await res.json();
     if (!inv || !inv.length) return;
     
-    // Tangible products with stock
     const tangible = inv.filter(i => i.quantity > 0 && !i.sku.startsWith('sku_installation_'));
     const pool = tangible.length > 0 ? tangible : inv.filter(i => i.quantity > 0);
     if (!pool.length) return;
     
     const picked = pool[Math.floor(Math.random() * pool.length)];
-    
-    // Choose random quantity (1-5, with bias towards threshold to trigger demo restocks)
     let qty = Math.floor(Math.random() * 5) + 1;
     if (Math.random() < 0.45 && picked.quantity > picked.reorder_threshold) {
       const dropQty = (picked.quantity - picked.reorder_threshold) + Math.floor(Math.random() * 3) + 1;
@@ -723,10 +906,38 @@ async function runSimulatedStep() {
     qty = Math.min(qty, picked.quantity);
     if (qty <= 0) qty = 1;
     
+    const companyReasons = {
+      'Afra Infra': [
+        `Urgent roofing maintenance required, need ${picked.name.toLowerCase()}`,
+        `Contractor restocking for ongoing commercial project: ${picked.name.toLowerCase()}`,
+        `Preparing building site with high-durability ${picked.name.toLowerCase()}`
+      ],
+      'Tropicana': [
+        `High summer beverage demand, ordering fresh ${picked.name.toLowerCase()}`,
+        `Juice bar restocking popular flavor: ${picked.name.toLowerCase()}`,
+        `Breakfast pantry replenishment: ${picked.name.toLowerCase()}`
+      ],
+      'Amul': [
+        `Daily morning dairy supply needed: ${picked.name.toLowerCase()}`,
+        `Bakery replenishment for batch baking: ${picked.name.toLowerCase()}`,
+        `Fresh dairy stock low, ordering ${picked.name.toLowerCase()}`
+      ],
+      'Minimalist': [
+        `Customer beauty routine restock: ${picked.name.toLowerCase()}`,
+        `Dermatology clinic pharmacy inventory order: ${picked.name.toLowerCase()}`,
+        `Repurchasing daily skincare essential: ${picked.name.toLowerCase()}`
+      ],
+      'Nestle': [
+        `Pantry staple restock for family grocery order: ${picked.name.toLowerCase()}`,
+        `Convenience store replenishment: ${picked.name.toLowerCase()}`,
+        `Office pantry snacks refill: ${picked.name.toLowerCase()}`
+      ]
+    };
+    const reasonsList = companyReasons[activeCompany] || [`Ordering more ${picked.name.toLowerCase()}`];
+    const fallbackReason = reasonsList[Math.floor(Math.random() * reasonsList.length)];
     const simItems = [{ sku: picked.sku, qty: qty }];
-    const simNotes = `Auto-simulated customer order (${picked.name})`;
     
-    await processCustomerOrder(simItems, simNotes, true);
+    await processCustomerOrder(simItems, fallbackReason, true, fallbackReason);
   } catch (err) {
     console.error('Error during simulated order generation:', err);
   }
@@ -754,7 +965,7 @@ function clearPipelineTimeline() {
   }
 }
 
-async function appendPipelineSteps(orderResult, items) {
+async function appendPipelineSteps(orderResult, items, reason = '') {
   const container = document.getElementById('pipelineTimeline');
   if (!container) return;
   
@@ -785,19 +996,24 @@ async function appendPipelineSteps(orderResult, items) {
   const processedItems = orderResult.items && orderResult.items.length > 0 ? orderResult.items : items;
   const itemDesc = (processedItems || []).map(i => `${i.qty}x ${i.name || i.sku}`).join(', ');
   
-  // Step 1: 🛒 Customer ordered {qty}x {product} [timestamp]
-  addStep(`🛒 Customer ordered ${itemDesc}`);
+  // Step 1: 🛒 Customer order
+  const displayReason = reason || (orderResult.notes ? orderResult.notes : '');
+  const brandTag = `[${orderResult.company || activeCompany}]`;
+  if (displayReason) {
+    addStep(`🛒 ${brandTag} Customer order: "${displayReason}" → ${itemDesc}`, 'font-weight:600;');
+  } else {
+    addStep(`🛒 ${brandTag} Customer ordered ${itemDesc}`);
+  }
   scrollPipelineToBottom();
   
-  // If stock does NOT drop below threshold, show only the first line (no restock steps).
   if (!isRestock) {
     return;
   }
   
-  // Lookup latest stock and threshold from inventory
+  // Lookup latest stock and threshold from active company inventory
   let invMap = {};
   try {
-    const res = await fetch('/inventory');
+    const res = await fetch(`/inventory?company=${encodeURIComponent(activeCompany)}`);
     const inv = await res.json();
     (inv || []).forEach(i => { invMap[i.sku] = i; });
   } catch (e) {}
@@ -820,30 +1036,45 @@ async function appendPipelineSteps(orderResult, items) {
       restockQty = decision.restock_items[0].qty || 10;
     }
     
-    // Step 2: 📉 Stock now {newStock} (below threshold of {threshold}) [timestamp]
+    // Step 2: 📉 Stock now {newStock} (below threshold of {threshold})
     await sleep(400);
     addStep(`📉 Stock now ${newStock} (below threshold of ${threshold})`, 'color:#d97706;');
     
-    // Step 3: 🤖 Gemini evaluating restock... [timestamp]
+    // Step 3: 🤖 Gemini evaluating restock...
     await sleep(400);
-    addStep(`🤖 Gemini evaluating restock...`, 'color:#2563eb;');
+    addStep(`🤖 Gemini evaluating restock for ${decision.company || activeCompany}...`, 'color:#2563eb;');
     
-    // Step 4: ✅ Gemini placed restock order: +{restockQty} units [timestamp]
+    // Step 4: ✅ Gemini placed restock order: +{restockQty} units
     await sleep(400);
     addStep(`✅ Gemini placed restock order: +${restockQty} units`, 'color:#059669; font-weight:600;');
+    
+    // Step 5: 🛡️ Groq Auditor reasoning
+    if (decision.checkout_result && decision.checkout_result.audit_result) {
+      const auditRes = decision.checkout_result.audit_result;
+      await sleep(400);
+      const isFlagged = auditRes.risk_flag === 'flagged_for_review';
+      addStep(
+        `🛡️ Groq Auditor: ${isFlagged ? '⚠️ FLAGGED' : '✓ APPROVED'} (${auditRes.reasoning || auditRes.risk_flag})`,
+        isFlagged ? 'color:#dc2626; font-weight:600;' : 'color:#15803d; font-weight:600;'
+      );
+    }
   }
 }
 
 async function addCustomerOrderItem(selectedSku = '', qty = 1) {
-  const data = await ensureCatalogLoaded();
+  const data = await ensureCatalogLoaded(activeCompany);
   const container = document.getElementById('customerOrderItems');
-  if (!container || !data) return;
+  if (!container || !data || !data.products || data.products.length === 0) return;
   
   const row = document.createElement('div');
   row.className = 'order-item-row';
   
+  const chosenSku = (selectedSku && data.products.some(p => p.id === selectedSku)) 
+    ? selectedSku 
+    : data.products[0].id;
+    
   let optionsHtml = data.products.map(p => 
-    `<option value="${p.id}" ${p.id === selectedSku ? 'selected' : ''}>${p.name} (INR ${(p.price_paise/100).toFixed(2)})</option>`
+    `<option value="${p.id}" ${p.id === chosenSku ? 'selected' : ''}>${p.name} (INR ${(p.price_paise/100).toFixed(2)})</option>`
   ).join('');
   
   row.innerHTML = `
@@ -854,7 +1085,7 @@ async function addCustomerOrderItem(selectedSku = '', qty = 1) {
   container.appendChild(row);
 }
 
-async function processCustomerOrder(customItems = null, customNotes = null, isSimulated = false) {
+async function processCustomerOrder(customItems = null, customNotes = null, isSimulated = false, orderReason = '') {
   let items = customItems;
   if (!items) {
     const itemRows = document.querySelectorAll('#customerOrderItems .order-item-row');
@@ -886,7 +1117,8 @@ async function processCustomerOrder(customItems = null, customNotes = null, isSi
     notes,
     auto_restock: autoRestock,
     gemini_api_key: geminiApiKey,
-    groq_api_key: groqApiKey
+    groq_api_key: groqApiKey,
+    company: activeCompany
   };
   
   try {
@@ -907,7 +1139,7 @@ async function processCustomerOrder(customItems = null, customNotes = null, isSi
     
     // Trigger the staggered Step-by-Step Pipeline
     if (data.success) {
-      await appendPipelineSteps(data, items);
+      await appendPipelineSteps(data, items, orderReason || notes);
     } else {
       const container = document.getElementById('pipelineTimeline');
       if (container) {
@@ -918,7 +1150,7 @@ async function processCustomerOrder(customItems = null, customNotes = null, isSi
         card.style.borderLeft = '4px solid var(--bad)';
         card.innerHTML = `
           <div class="pipeline-step revealed">
-            <span class="pipeline-step-text" style="color:var(--bad);">❌ ${data.message}</span>
+            <span class="pipeline-step-text" style="color:var(--bad);">❌ [${activeCompany}] ${data.message}</span>
             <span class="pipeline-time">[${new Date().toLocaleTimeString()}]</span>
           </div>
         `;
@@ -927,18 +1159,18 @@ async function processCustomerOrder(customItems = null, customNotes = null, isSi
       }
     }
     
-    // Render concise result box (without the old static badge)
+    // Render concise result box
     const cls = data.success ? 'success' : 'failure';
     const tag = data.success ? '✓ ORDER PROCESSED' : '✗ ORDER FAILED';
     document.getElementById('resultBox').innerHTML = `
       <div class="result ${cls}">
         <span class="tag ${cls}">${tag}</span>
-        <div style="font-size:15px; margin-top:6px; font-weight:600;">${data.message}</div>
+        <div style="font-size:15px; margin-top:6px; font-weight:600;">[${data.company || activeCompany}] ${data.message}</div>
         ${data.total_paise ? `<div style="margin-top:8px; font-size:14px;"><strong>Cart Total:</strong> INR ${(data.total_paise/100).toFixed(2)}</div>` : ''}
-        ${isSimulated ? `<div class="muted" style="margin-top:6px; font-size:12px;">Mode: Automated Order Simulation</div>` : ''}
+        ${isSimulated ? `<div class="muted" style="margin-top:6px; font-size:12px;">Mode: Automated Customer Agent Simulation (${activeCompany})</div>` : ''}
       </div>
     `;
-    document.getElementById('resultMeta').textContent = 'Processed at ' + new Date().toLocaleTimeString();
+    document.getElementById('resultMeta').textContent = `Processed at ${new Date().toLocaleTimeString()} [${activeCompany}]`;
     
     loadCustomerOrders();
     loadInventory();
@@ -956,11 +1188,11 @@ async function loadCustomerOrders() {
   if (!container) return;
   
   try {
-    const res = await fetch('/customer-orders?limit=15');
+    const res = await fetch(`/customer-orders?limit=15&company=${encodeURIComponent(activeCompany)}`);
     const orders = await res.json();
     
     if (!orders || orders.length === 0) {
-      container.innerHTML = '<div class="muted">No customer orders recorded yet.</div>';
+      container.innerHTML = `<div class="muted">No customer orders recorded for ${activeCompany} yet.</div>`;
       return;
     }
     
@@ -975,8 +1207,10 @@ async function loadCustomerOrders() {
             <span class="order-card-title">Order #${o.id} &bull; INR ${(o.total_paise/100).toFixed(2)}</span>
             <span class="order-card-date">${new Date(o.order_date).toLocaleString()}</span>
           </div>
-          <div class="order-card-items"><strong>Items:</strong> ${itemsDesc || 'None'}</div>
-          ${o.notes ? `<div class="order-card-items" style="color:var(--ink);"><strong>Notes:</strong> ${o.notes}</div>` : ''}
+          <div class="order-card-items">
+            <strong>🛒 Customer order:</strong> ${o.notes ? `<em>"${o.notes}"</em> &rarr; ` : ''}${itemsDesc || 'None'}
+          </div>
+          <div class="muted" style="font-size:11px; margin-top:4px;">Merchant: <strong>${o.company || activeCompany}</strong></div>
         </div>
       `;
     }).join('');
@@ -993,20 +1227,20 @@ async function checkInventoryThreshold() {
   if (!container) return;
   
   try {
-    const res = await fetch('/inventory/check');
+    const res = await fetch(`/inventory/check?company=${encodeURIComponent(activeCompany)}`);
     const items = await res.json();
     
     if (!items || items.length === 0) {
       container.innerHTML = `
         <div style="background:rgba(16,185,129,0.08); border:1px solid var(--ok); border-radius:8px; padding:10px 14px; font-size:13px; color:#059669; font-weight:600;">
-          ✓ All inventory levels healthy. No SKUs below reorder threshold.
+          ✓ All ${activeCompany} inventory levels healthy. No SKUs below reorder threshold.
         </div>
       `;
       return;
     }
     
     container.innerHTML = `
-      <div style="font-size:12.5px; font-weight:600; color:var(--bad); margin-bottom:6px;">⚠️ ${items.length} item(s) below reorder threshold:</div>
+      <div style="font-size:12.5px; font-weight:600; color:var(--bad); margin-bottom:6px;">⚠️ ${items.length} item(s) below reorder threshold for ${activeCompany}:</div>
       <table class="data-table">
         <thead>
           <tr><th>SKU / Name</th><th>Stock</th><th>Threshold</th><th>Action Needed</th></tr>
@@ -1036,7 +1270,8 @@ async function triggerAutoRestock() {
   
   const body = {
     gemini_api_key: geminiKey,
-    groq_api_key: groqKey
+    groq_api_key: groqKey,
+    company: activeCompany
   };
   
   try {
@@ -1052,7 +1287,7 @@ async function triggerAutoRestock() {
     document.getElementById('resultBox').innerHTML = `
       <div class="result ${count > 0 ? 'warning' : 'success'}">
         <span class="tag ${count > 0 ? 'warning' : 'success'}">${count > 0 ? '🤖 RESTOCK PIPELINE EXECUTED' : '✓ INVENTORY HEALTHY'}</span>
-        <div style="font-size:15px; margin-top:6px; font-weight:600;">${data.message}</div>
+        <div style="font-size:15px; margin-top:6px; font-weight:600;">[${data.company || activeCompany}] ${data.message}</div>
         ${data.restock_decisions ? `
           <div style="margin-top:12px;">
             ${data.restock_decisions.map(d => `
@@ -1075,7 +1310,7 @@ async function triggerAutoRestock() {
         ` : ''}
       </div>
     `;
-    document.getElementById('resultMeta').textContent = 'Restock Check at ' + new Date().toLocaleTimeString();
+    document.getElementById('resultMeta').textContent = `Restock Check at ${new Date().toLocaleTimeString()} [${activeCompany}]`;
     
     checkInventoryThreshold();
     loadRestockOrders();
@@ -1091,12 +1326,12 @@ async function loadRestockOrders() {
   const historyContainer = document.getElementById('restockOrdersList');
   
   try {
-    const res = await fetch('/restock-orders?limit=25');
+    const res = await fetch(`/restock-orders?limit=25&company=${encodeURIComponent(activeCompany)}`);
     const orders = await res.json();
     
     if (!orders || orders.length === 0) {
-      if (pendingContainer) pendingContainer.innerHTML = '<div class="muted">No pending restock orders.</div>';
-      if (historyContainer) historyContainer.innerHTML = '<div class="muted">No restock orders in history.</div>';
+      if (pendingContainer) pendingContainer.innerHTML = `<div class="muted">No pending restock orders for ${activeCompany}.</div>`;
+      if (historyContainer) historyContainer.innerHTML = `<div class="muted">No restock history for ${activeCompany}.</div>`;
       return;
     }
     
@@ -1105,7 +1340,7 @@ async function loadRestockOrders() {
     
     if (pendingContainer) {
       if (pending.length === 0) {
-        pendingContainer.innerHTML = '<div class="muted">No pending restock orders awaiting approval.</div>';
+        pendingContainer.innerHTML = `<div class="muted">No pending restock orders awaiting approval for ${activeCompany}.</div>`;
       } else {
         pendingContainer.innerHTML = pending.map(o => {
           let items = [];
@@ -1133,7 +1368,7 @@ async function loadRestockOrders() {
     
     if (historyContainer) {
       if (history.length === 0) {
-        historyContainer.innerHTML = '<div class="muted">No completed or rejected restock orders yet.</div>';
+        historyContainer.innerHTML = `<div class="muted">No completed or rejected restock orders for ${activeCompany} yet.</div>`;
       } else {
         historyContainer.innerHTML = history.map(o => {
           let items = [];
@@ -1148,7 +1383,7 @@ async function loadRestockOrders() {
                 <span class="status-badge ${statusCls}">${o.status.toUpperCase()}</span>
               </div>
               <div class="order-card-items"><strong>Items:</strong> ${itemsDesc}</div>
-              <div class="order-card-date" style="margin-top:4px;">Date: ${new Date(o.order_date).toLocaleString()}</div>
+              <div class="order-card-date" style="margin-top:4px;">Date: ${new Date(o.order_date).toLocaleString()} &bull; Merchant: ${o.company || activeCompany}</div>
             </div>
           `;
         }).join('');
@@ -1184,15 +1419,16 @@ async function loadInventory() {
   if (!container) return;
   
   try {
-    const res = await fetch('/inventory');
+    const res = await fetch(`/inventory?company=${encodeURIComponent(activeCompany)}`);
     const items = await res.json();
     
     if (!items || items.length === 0) {
-      container.innerHTML = '<div class="muted">No inventory records found.</div>';
+      container.innerHTML = `<div class="muted">No inventory records found for ${activeCompany}.</div>`;
       return;
     }
     
     container.innerHTML = `
+      <div style="font-size:12.5px; color:var(--dim); margin-bottom:8px;">Showing <strong>${items.length}</strong> items for <strong>${activeCompany}</strong>:</div>
       <table class="data-table">
         <thead>
           <tr>
@@ -1229,7 +1465,7 @@ async function loadInventory() {
 }
 
 /* =========================================================================
-   4. AI Buyer Checkout Logic (Original Flow)
+   4. AI Buyer Checkout Logic
    ========================================================================= */
 async function checkout() {
   SESSION = "session_" + Math.random().toString(36).slice(2, 8);
@@ -1264,6 +1500,7 @@ async function checkout() {
     customer_goal: customerGoal,
     groq_api_key: groqApiKey,
     gemini_api_key: geminiApiKey,
+    company: activeCompany
   };
   
   try {
@@ -1347,16 +1584,17 @@ async function approveHeldOrder(sessionId) {
 }
 
 /* =========================================================================
-   Audit Trail Rendering
+   Audit Trail Rendering (Scoped per company)
    ========================================================================= */
 async function loadAudit() {
   try {
-    const res = await fetch('/audit' + (SESSION ? `?session_id=${SESSION}` : ''));
+    const compParam = `company=${encodeURIComponent(activeCompany)}`;
+    const res = await fetch(`/audit?${compParam}` + (SESSION ? `&session_id=${encodeURIComponent(SESSION)}` : ''));
     let entries = await res.json();
     
-    // If no entries for this session, load all recent entries
+    // If no entries for this session, load all recent entries for activeCompany
     if (!entries || entries.length === 0) {
-      const allRes = await fetch('/audit');
+      const allRes = await fetch(`/audit?${compParam}`);
       entries = await allRes.json();
     }
     
@@ -1411,10 +1649,10 @@ async function loadAudit() {
       ` + html;
     }
     
-    timeline.innerHTML = html || '<div class="muted">No audit entries yet. Run a customer order or checkout to see the audit trail.</div>';
+    timeline.innerHTML = html || `<div class="muted">No audit entries yet for ${activeCompany}. Run a customer order or checkout to see the audit trail.</div>`;
     const auditMetaEl = document.getElementById('auditMeta');
     if (auditMetaEl) {
-      auditMetaEl.textContent = `${(entries || []).length} entries`;
+      auditMetaEl.textContent = `${(entries || []).length} entries [${activeCompany}]`;
     }
   } catch (err) {
     console.error('Failed to load audit:', err);

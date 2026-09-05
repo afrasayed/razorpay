@@ -16,6 +16,16 @@ def test_suite():
     print("Testing Backend Endpoints for all 4 Tabs")
     print("========================================")
     
+    # Reseed/reset inventory to known starting levels before running the test suite
+    try:
+        requests.post(f"{BASE_URL}/inventory/reset")
+    except Exception:
+        try:
+            from app.inventory import reset_inventory
+            reset_inventory()
+        except Exception:
+            pass
+
     passed_count = 0
     failed_count = 0
 
@@ -63,10 +73,17 @@ def test_suite():
 
     # 4. Test Customer Order (Depletion)
     def step4():
+        # Check current stock via GET /inventory first and request a quantity within what's available
+        r_inv = requests.get(f"{BASE_URL}/inventory")
+        assert r_inv.status_code == 200, f"Expected 200, got {r_inv.status_code}"
+        inv = r_inv.json()
+        avail = [i for i in inv if i.get("quantity", 0) > 0 and not i["sku"].startswith("sku_installation_")]
+        assert len(avail) > 0, "No in-stock tangible inventory available to test customer order"
+        target_item = avail[0]
+        order_qty = min(target_item["quantity"], 2)
         order_req = {
             "items": [
-                {"sku": "sku_roof_sheet_std", "qty": 5},
-                {"sku": "sku_ridge_cap", "qty": 2}
+                {"sku": target_item["sku"], "qty": order_qty}
             ],
             "notes": "Integration test customer order",
             "auto_restock": False
@@ -75,8 +92,18 @@ def test_suite():
         assert r.status_code == 200, f"Expected 200, got {r.status_code}"
         order_res = r.json()
         assert order_res.get("success") is True, f"Order failed: {order_res}"
-        return f"Customer order placed: {order_res['message']}"
+        return f"Customer order placed: {order_qty}x {target_item['name']} ({order_res['message']})"
     run_step(4, "POST /customer-order", step4)
+
+    # 4b. Test AI Customer Order Generation (Groq / Fallback)
+    def step4b():
+        r = requests.post(f"{BASE_URL}/customer-order/generate", json={"groq_api_key": ""})
+        assert r.status_code == 200, f"Expected 200, got {r.status_code}"
+        gen_res = r.json()
+        assert "sku" in gen_res and "quantity" in gen_res and "reason" in gen_res, f"Malformed response: {gen_res}"
+        assert gen_res["quantity"] > 0, f"Expected positive qty: {gen_res}"
+        return f"Customer agent generated order: {gen_res['quantity']}x {gen_res['product']} (Reason: '{gen_res['reason']}', Source: {gen_res.get('generated_by', 'unknown')})"
+    run_step("4b", "POST /customer-order/generate", step4b)
 
     # 5. Test Customer Orders List
     def step5():
