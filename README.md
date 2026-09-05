@@ -2,6 +2,8 @@
 
 > **AI agents generate, evaluate, and independently audit every transaction — so no single AI's judgment goes unchecked.**
 
+**TL;DR:** Three independent AI agents (Groq customer agent, Gemini restock agent, Groq auditor) generate, execute, and cross-check every transaction — live API calls throughout, multi-tenant across 5 businesses.
+
 ---
 
 ## Honest Status (as of submission)
@@ -19,7 +21,7 @@
 
 ## 1. Problem Statement
 
-Most AI-driven commerce and checkout systems rely on a single AI's judgment with zero independent verification. If that AI hallucinates, gets manipulated, or makes a bad replenishment decision, nothing catches it before funds are committed and a payment transaction completes. High-trust autonomous commerce requires a strict division of powers: one agent to reason, deterministic rules to enforce business boundaries, and an independent third-party auditor to cross-check intent before execution.
+Most AI-driven commerce systems rely on a single AI's judgment with zero independent verification, allowing hallucinations or manipulated actions to commit funds unchecked. High-trust autonomous commerce requires a strict division of powers: one agent to reason, deterministic rules to enforce business boundaries, and an independent auditor to verify intent before checkout.
 
 ---
 
@@ -63,15 +65,10 @@ Immutable Audit Log & Command Centre Feed
 
 ## 3. Key Features
 
-- **Multi-Agent Verification**: Policy boundaries and the LLM safety auditor operate completely independently. Disagreements and security holds are transparently surfaced to the operator dashboard, never swept under the rug.
-- **Multi-Tenant Isolation**: Complete data and inventory isolation across **5 distinct business domains**:
-  - **Afra Infra**: Smart Roofing & Industrial Building Supplies
-  - **Tropicana**: Cold-Chain Juices & Premium Beverages
-  - **Amul**: Perishable Dairy & Pantry Essentials
-  - **Minimalist**: Active Dermatology & Clinical Skincare
-  - **Nestle**: Packaged Foods & Confectionery
+- **Multi-Agent Verification**: Deterministic policy rules and an independent LLM auditor cross-check restock orders, routing anomalies to operator review.
+- **Multi-Tenant Isolation**: Complete catalog and inventory isolation across 5 distinct business domains (Afra Infra, Tropicana, Amul, Minimalist, Nestle).
 - **Live Simulation Mode**: Single-click autonomous simulation loops triggering real-time customer demand, threshold breaches, automated restock calculations, and independent audits.
-- **Command Centre & Audit Trail**: Real-time side-by-side feed of customer orders, restock events, policy evaluations, and payment references with an explicit operator override workflow.
+- **Command Centre & Audit Trail**: Real-time feed of orders, restocks, policy checks, and payments with an explicit operator override workflow.
 
 ---
 
